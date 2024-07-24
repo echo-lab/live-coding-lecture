@@ -6,7 +6,6 @@ import {
   followInstructorExtensions,
   setInstructorSelection,
 } from "./cm-extensions.js";
-import { PythonCodeRunner } from "./code-runner.js";
 
 const JSON_HEADERS = {
   "Content-Type": "application/json",
@@ -47,9 +46,9 @@ export class StudentCodeEditor {
     this.sessionNumber = sessionNumber;
     this.flushUrl = flushUrl;
 
-    this.codeRunner = new PythonCodeRunner();
-
-    let snapshotExtensions = onNewSnapshot ? codeSnapshotFields(onNewSnapshot) : [];
+    let snapshotExtensions = onNewSnapshot
+      ? codeSnapshotFields(onNewSnapshot)
+      : [];
 
     let state = EditorState.create({
       doc: Text.of(doc),
@@ -68,10 +67,8 @@ export class StudentCodeEditor {
     );
   }
 
-  async runCurrentCode() {
-    let code = this.view.state.doc.toString();
-    let res = await this.codeRunner.asyncRun(code);
-    return res;
+  currentCode() {
+    return this.view.state.doc.toString();
   }
 
   onCodeUpdate(viewUpdate) {
@@ -89,11 +86,13 @@ export class StudentCodeEditor {
   }
 
   replaceContents(newCode) {
-    this.view.dispatch({changes: {
-      from: 0,
-      to: this.view.state.doc.length,
-      insert: newCode,
-    }});
+    this.view.dispatch({
+      changes: {
+        from: 0,
+        to: this.view.state.doc.length,
+        insert: newCode,
+      },
+    });
   }
 
   endSession() {
@@ -222,5 +221,61 @@ export class CodeFollowingEditor {
 
   currentCode() {
     return this.view.state.doc.toString();
+  }
+}
+
+export class InstructorCodeEditor {
+  constructor(node, socket, doc, startVersion) {
+    this.docVersion = startVersion;
+    this.socket = socket;
+
+    let state = EditorState.create({
+      doc: Text.of(doc),
+      extensions: [
+        ...basicExtensions,
+        EditorView.updateListener.of(
+          this.broadcastInstructorChanges.bind(this)
+        ),
+      ],
+    });
+
+    this.view = new EditorView({ state, parent: node });
+    this.active = true;
+  }
+
+  currentCode() {
+    return this.view.state.doc.toString();
+  }
+
+  endSession() {
+    this.active = false;
+  }
+
+  broadcastInstructorChanges(viewUpdate) {
+    if (!this.active) return;
+
+    if (viewUpdate.docChanged) {
+      viewUpdate.transactions.forEach((tr) => {
+        // if (!tr.annotation(Transaction.userEvent)) return;
+        // let userEvent = tr.annotation(Transaction.userEvent);
+        this.socket.emit("instructor event", {
+          id: this.docVersion,
+          changes: tr.changes.toJSON(),
+          ts: Date.now(),
+        });
+        this.docVersion++;
+      });
+    }
+    // If the cursor position might have changed, send out the current one.
+    if (
+      viewUpdate.docChanged ||
+      viewUpdate.transactions.some((tr) => tr.isUserEvent("select"))
+    ) {
+      let { anchor, head } = viewUpdate.state.selection.main;
+      this.socket.emit("instructor event", {
+        cursor: { anchor, head },
+        // id: docVersion,
+      });
+    }
   }
 }

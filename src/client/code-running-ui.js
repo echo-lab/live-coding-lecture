@@ -1,5 +1,33 @@
 const MAX_OUTPUT_LENGTH = 50;
 
+export function initializeRunInteractions({
+  runButtonEl,
+  codeEditor,
+  codeRunner,
+  consoleOutput,
+}) {
+  let running = false;
+  let el = runButtonEl;
+  runButtonEl.addEventListener("click", async () => {
+    if (running) return;
+    running = true;
+    el.classList.add("in-progress");
+    el.disabled = true;
+    el.textContent = "Running...";
+
+    let minRunTime = new Promise((resolve) => setTimeout(resolve, 500));
+    let code = codeEditor.currentCode();
+    let res = await codeRunner.asyncRun(code);
+    await minRunTime;
+    consoleOutput.addResult(res);
+
+    el.classList.remove("in-progress");
+    el.disabled = false;
+    el.textContent = "▶ ️Run";
+    running = false;
+  });
+}
+
 export class Console {
   constructor(consoleContainer) {
     this.el = consoleContainer;
@@ -25,7 +53,7 @@ export class Console {
 
     let header = document.createElement("span");
     let timeString = new Date(ts).toLocaleTimeString();
-    header.innerText = `${fileName} -- run at ${timeString}`;
+    header.innerText = `${fileName} (${timeString})`;
     header.classList.add("code-output-header");
     container.appendChild(header);
 
