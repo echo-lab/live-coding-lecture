@@ -3,6 +3,7 @@ import ViteExpress from "vite-express";
 import * as http from "http";
 import { Server } from "socket.io";
 import { LectureSession } from "./database.js";
+import { CLIENT_TYPE } from "../shared-constants.js";
 
 const app = express();
 
@@ -191,6 +192,42 @@ app.post("/record-typealong-changes", async (req, res) => {
 
 app.post("/record-playground-changes", async (req, res) => {
   await recordBatchCodeChanges(req, res, false);
+});
+
+app.post("/record-user-action", async (req, res) => {
+  let {
+    ts,
+    docVersion,
+    codeVersion,
+    actionType,
+    sessionNumber,
+    source,
+    email,
+  } = req.body;
+  if (!source) return;
+
+  let lecture = await LectureSession.findByPk(sessionNumber);
+  if (!lecture) return;
+
+  const record = {
+    action_ts: ts,
+    code_version: codeVersion,
+    doc_version: docVersion,
+    action_type: actionType,
+  };
+
+  if (source === CLIENT_TYPE.INSTRUCTOR) {
+    await lecture.createInstructorAction(record);
+  } else if (source === CLIENT_TYPE.TYPEALONG) {
+    let sesh = await lecture.getTypealongSessions({ where: { email } });
+    await sesh[0].createTypealongAction(record);
+  } else if (source === CLIENT_TYPE.NOTES) {
+    let sesh = await lecture.getNotesSessions({ where: { email } });
+    await sesh[0].createNotesAction(record);
+  } else {
+    console.warning("bad source value...");
+    return;
+  }
 });
 
 async function recordBatchCodeChanges(req, res, isTypealong) {

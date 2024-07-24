@@ -6,6 +6,7 @@ import { getEmail, clearEmail } from "./utils.js";
 import { StudentCodeEditor } from "./code-editors.js";
 import { PythonCodeRunner } from "./code-runner.js";
 import { Console, initializeRunInteractions } from "./code-running-ui.js";
+import { CLIENT_TYPE } from "../shared-constants.js";
 
 const JSON_HEADERS = {
   "Content-Type": "application/json",
@@ -70,7 +71,9 @@ async function attemptInitialization() {
     codeEditor,
     codeRunner,
     consoleOutput,
-    fileName: "my_notes.py",
+    sessionNumber,
+    source: CLIENT_TYPE.TYPEALONG,
+    email,
   });
 
   socket.on("end session", () => {

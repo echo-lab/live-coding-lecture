@@ -1,15 +1,26 @@
+import { CLIENT_TYPE, USER_ACTIONS } from "../shared-constants";
+
 const MAX_OUTPUT_LENGTH = 50;
+
+const FILE_NAME = {
+  [CLIENT_TYPE.INSTRUCTOR]: "instructor.py",
+  [CLIENT_TYPE.TYPEALONG]: "my_notes.py",
+  [CLIENT_TYPE.NOTES]: "playground.py",
+};
 
 export function initializeRunInteractions({
   runButtonEl,
   codeEditor,
   codeRunner,
   consoleOutput,
-  fileName = "instructor.py",
+  sessionNumber,
+  source,
+  email,
   broadcastResult = () => {},
 }) {
   let running = false;
   let el = runButtonEl;
+  let fileName = FILE_NAME[source];
   runButtonEl.addEventListener("click", async () => {
     if (running) return;
     running = true;
@@ -17,12 +28,27 @@ export function initializeRunInteractions({
     el.disabled = true;
     el.textContent = "Running...";
 
+    // Record the action on the server. No need to await.
+    let payload = {
+      ts: Date.now(),
+      codeVersion: codeEditor.getDocVersion(),
+      actionType: USER_ACTIONS.CODE_RUN,
+      sessionNumber,
+      source,
+      email,
+    };
+    fetch("/record-user-action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
     let minRunTime = new Promise((resolve) => setTimeout(resolve, 500));
     let code = codeEditor.currentCode();
     let res = await codeRunner.asyncRun(code);
     await minRunTime;
     consoleOutput.addResult({ fileName, ...res });
-    broadcastResult({fileName, ...res}); // A no-op in student interfaces.
+    broadcastResult({ fileName, ...res }); // A no-op in student interfaces.
 
     el.classList.remove("in-progress");
     el.disabled = false;

@@ -67,6 +67,10 @@ export class StudentCodeEditor {
     );
   }
 
+  getDocVersion() {
+    return this.docVersion;
+  }
+
   currentCode() {
     return this.view.state.doc.toString();
   }
@@ -157,6 +161,10 @@ export class CodeFollowingEditor {
     });
   }
 
+  getDocVersion() {
+    return this.docVersion;
+  }
+
   async handleInstructorEvent(msg) {
     if (!msg.cursor && !msg.changes) {
       console.warn("Unexpected message: ", msg);
@@ -241,6 +249,10 @@ export class InstructorCodeEditor {
 
     this.view = new EditorView({ state, parent: node });
     this.active = true;
+  }
+
+  getDocVersion() {
+    return this.docVersion;
   }
 
   currentCode() {

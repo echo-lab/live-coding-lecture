@@ -12,6 +12,7 @@ import { io } from "socket.io-client";
 import { CodeFollowingEditor, StudentCodeEditor } from "./code-editors.js";
 import { PythonCodeRunner } from "./code-runner.js";
 import { Console, initializeRunInteractions } from "./code-running-ui.js";
+import { CLIENT_TYPE } from "../shared-constants.js";
 
 const Delta = Quill.import("delta");
 
@@ -120,6 +121,10 @@ class NotesEditor {
     this.quill.setContents(doc, Quill.sources.SILENT);
 
     this.quill.on("text-change", this.onEditorChange.bind(this));
+  }
+
+  getDocVersion() {
+    return this.localVersionNum;
   }
 
   endSession() {
@@ -261,7 +266,9 @@ async function attemptInitialization() {
     codeEditor: playgroundEditor,
     codeRunner,
     consoleOutput,
-    fileName: "playground.py",
+    sessionNumber,
+    source: CLIENT_TYPE.NOTES,
+    email,
   });
   socket.on("instructor code run", (msg) => consoleOutput.addResult(msg));
 

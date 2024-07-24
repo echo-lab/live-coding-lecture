@@ -9,6 +9,7 @@ import { PythonCodeRunner } from "./code-runner.js";
 import { basicExtensions } from "./cm-extensions.js";
 import { Console, initializeRunInteractions } from "./code-running-ui.js";
 import { InstructorCodeEditor } from "./code-editors.js";
+import { CLIENT_TYPE } from "../shared-constants.js";
 
 const codeContainer = document.querySelector("#code-container");
 const startButton = document.querySelector("#start-session-butt");
@@ -74,6 +75,8 @@ function initialize({ doc = null, docVersion = null, sessionNumber = null }) {
     codeEditor,
     codeRunner,
     consoleOutput,
+    sessionNumber,
+    source: CLIENT_TYPE.INSTRUCTOR,
     broadcastResult: (msg) => socket.emit("instructor code run", msg),
   });
 

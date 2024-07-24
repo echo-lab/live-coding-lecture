@@ -3,10 +3,33 @@ import { Text, ChangeSet } from "@codemirror/state";
 
 const sequelize = new Sequelize("sqlite::memory:"); // Example for sqlite
 
+// TODO: add user actions... lol.
+// Question: Can we just chuck them in one big table? Eh. Probs not worth it.
+/*
+LectureSession
+  InstructorChange
+  InstructorAction
+  TypealongSession
+    TypealongChange
+    TypealongAction
+  NotesSession
+    NotesChange
+    PlaygroundCodeChange
+    NotesAction
+*/
+
 const CODE_CHANGE_SCHEMA = {
   change_number: DataTypes.INTEGER,
   change: DataTypes.TEXT,
   change_ts: DataTypes.INTEGER,
+};
+
+// Actions that are NOT document/code edits, e.g., running code; copying code into the playground.
+const USER_ACTION_SCHEMA = {
+  action_ts: DataTypes.INTEGER,
+  code_version: DataTypes.INTEGER,
+  doc_version: DataTypes.INTEGER,
+  action_type: DataTypes.STRING,
 };
 
 function reconstructCMDoc(changes) {
@@ -89,11 +112,15 @@ LectureSession.init(
 );
 
 export class InstructorChange extends Model {}
-
 InstructorChange.init(CODE_CHANGE_SCHEMA, { sequelize });
 
 LectureSession.hasMany(InstructorChange, { foreignKey: "LectureSessionsId" });
 InstructorChange.belongsTo(LectureSession);
+
+export class InstructorAction extends Model {}
+InstructorAction.init(USER_ACTION_SCHEMA, { sequelize });
+LectureSession.hasMany(InstructorAction, { foreignKey: "LectureSessionsId" });
+InstructorAction.belongsTo(LectureSession);
 
 export class TypealongSession extends Model {
   // SLOW-ish
@@ -157,6 +184,11 @@ TypealongChange.init(
 
 TypealongSession.hasMany(TypealongChange, { foreignKey: "TypealongChangeId" });
 TypealongChange.belongsTo(TypealongSession);
+
+export class TypealongAction extends Model {}
+TypealongAction.init(USER_ACTION_SCHEMA, { sequelize });
+TypealongSession.hasMany(TypealongAction, { foreignKey: "TypealongChangeId" });
+TypealongAction.belongsTo(TypealongSession);
 
 export class NotesSession extends Model {
   // Returns all the deltas, in order.
@@ -234,5 +266,10 @@ PlaygroundCodeChange.init(CODE_CHANGE_SCHEMA, { sequelize });
 
 NotesSession.hasMany(PlaygroundCodeChange, { foreignKey: "NotesChangeId" });
 PlaygroundCodeChange.belongsTo(NotesSession);
+
+export class NotesAction extends Model {}
+NotesAction.init(USER_ACTION_SCHEMA, { sequelize });
+NotesSession.hasMany(NotesAction, { foreignKey: "NotesChangeId" });
+NotesAction.belongsTo(NotesSession);
 
 await sequelize.sync({ force: true });
