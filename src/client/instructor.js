@@ -7,6 +7,7 @@ import { EditorView } from "codemirror";
 import { EditorState, Text } from "@codemirror/state";
 import { PythonCodeRunner } from "./code-runner.js";
 import { basicExtensions } from "./cm-extensions.js";
+import { Console } from "./console-output.js";
 
 const codeContainer = document.querySelector("#code-container");
 const startButton = document.querySelector("#start-session-butt");
@@ -114,42 +115,12 @@ startButton.addEventListener("click", async () => {
   await getOrCreateSession(true);
 });
 
-function updateUIForCodeRun({
-  results = null,
-  error = null,
-  stderr = [],
-  stdout = [],
-}) {
-  let container = document.createElement("div");
-  container.classList.add("one-code-run-output");
-
-  let header = document.createElement("span");
-  header.innerText = `Run at ${new Date().toLocaleTimeString()}`;
-  header.classList.add("code-output-header")
-  container.appendChild(header);
-
-  let addOutput = (text, className) => {
-    let div = document.createElement("div");
-    div.classList.add(className);
-    let pre = document.createElement("pre");
-    pre.innerText = text;
-    div.appendChild(pre);
-    container.appendChild(div);
-  };
-  stdout.forEach((line) => addOutput(line, "stdout-line"));
-  stderr.forEach((line) => addOutput(line, "stderr-line"));
-  error && addOutput(error, "stderr-line");
-  results && addOutput(results, "stdout-line");
-
-  outputCodeContainer.appendChild(container);
-  outputCodeContainer.scrollTo(0, 1e6);
-}
-
 // Start up the editor and hook up the end session button.
 function initialize({ doc = null, docVersion = null, sessionNumber = null }) {
   startButton.disabled = true;
   endButton.disabled = false;
   sessionDetails.textContent = `Session: ${sessionNumber}`;
+  let consoleOutput = new Console(outputCodeContainer);
 
   let codeEditor = new CodeEditor(codeContainer, socket, doc, docVersion);
 
@@ -161,7 +132,7 @@ function initialize({ doc = null, docVersion = null, sessionNumber = null }) {
     let minRunTime = new Promise((resolve) => setTimeout(resolve, 500));
     let res = await codeEditor.runCurrentCode();
     await minRunTime;
-    updateUIForCodeRun(res);
+    consoleOutput.addResult(res);
 
     runButton.classList.remove("in-progress");
     runButton.disabled = false;
