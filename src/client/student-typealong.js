@@ -3,12 +3,9 @@ import "./style.css";
 import { io } from "socket.io-client";
 import { getEmail, clearEmail } from "./utils.js";
 
-import { EditorView } from "codemirror";
-import { EditorState, Text } from "@codemirror/state";
-import { basicExtensions } from "./cm-extensions.js";
 import { StudentCodeEditor } from "./code-editors.js";
-
-const FLUSH_CHANGES_FREQ = /*seconds=*/ 3 * 1000; // flush the changes every 10 seconds.
+import { PythonCodeRunner } from "./code-runner.js";
+import { Console, initializeRunInteractions } from "./code-running-ui.js";
 
 const JSON_HEADERS = {
   "Content-Type": "application/json",
@@ -19,20 +16,20 @@ const POST_REQUEST = { method: "POST", headers: JSON_HEADERS };
 const codeContainer = document.querySelector("#code-container");
 const studentDetailsContainer = document.querySelector("#student-email");
 const changeEmailLink = document.querySelector("#change-email");
+const runButtonEl = document.querySelector("#run-button");
+const outputCodeContainer = document.querySelector("#all-code-outputs");
 
 const socket = io();
 
 const email = getEmail();
-studentDetailsContainer.textContent = email;
+studentDetailsContainer.textContent = `Your email: ${email}`;
+const emailMessage =
+  "Are you sure you want to change your email? Progress will be lost";
 changeEmailLink.hidden = false;
-
 changeEmailLink.addEventListener("click", () => {
-  if (
-    confirm("Are you sure you want to change your email? Progress will be lost")
-  ) {
-    clearEmail();
-    window.location.reload();
-  }
+  if (!confirm(emailMessage)) return;
+  clearEmail();
+  window.location.reload();
 });
 
 ///////////////////////////
@@ -56,7 +53,7 @@ async function attemptInitialization() {
 
   let { doc, sessionNumber, docVersion } = res;
   // let editor = new CodeEditor(codeContainer, doc, docVersion, sessionNumber);
-  let editor = new StudentCodeEditor({
+  let codeEditor = new StudentCodeEditor({
     node: codeContainer,
     doc,
     docVersion,
@@ -65,9 +62,20 @@ async function attemptInitialization() {
     flushUrl: "/record-typealong-changes",
   });
 
+  let codeRunner = new PythonCodeRunner();
+  let consoleOutput = new Console(outputCodeContainer);
+
+  initializeRunInteractions({
+    runButtonEl,
+    codeEditor,
+    codeRunner,
+    consoleOutput,
+    fileName: "my_notes.py",
+  });
+
   socket.on("end session", () => {
     console.log("SESSION IS ENDED!");
-    editor.endSession();
+    codeEditor.endSession();
   });
 }
 

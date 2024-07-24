@@ -10,6 +10,8 @@ import { getEmail } from "./utils.js";
 
 import { io } from "socket.io-client";
 import { CodeFollowingEditor, StudentCodeEditor } from "./code-editors.js";
+import { PythonCodeRunner } from "./code-runner.js";
+import { Console, initializeRunInteractions } from "./code-running-ui.js";
 
 const Delta = Quill.import("delta");
 
@@ -27,7 +29,8 @@ const playgroundCodeContainer = document.querySelector(
 );
 const instructorCodeTab = document.querySelector("#instructor-code-tab");
 const playgroundCodeTab = document.querySelector("#playground-code-tab");
-const runButton = document.querySelector("#run-button");
+const runButtonEl = document.querySelector("#run-button");
+const codeOutputsEl = document.querySelector("#all-code-outputs");
 let instructorTabActive = true;
 
 const NOTES_CONTAINER_ID = "#notes-document";
@@ -249,6 +252,16 @@ async function attemptInitialization() {
     onNewSnapshot: notesEditor.createAnchor.bind(notesEditor, "student"),
   });
   playgroundCodeContainer.style.display = "none"; // Not sure why we have to do this again...
+
+  // Set up the run button for the playground tab.
+  let codeRunner = new PythonCodeRunner();
+  initializeRunInteractions({
+    runButtonEl,
+    codeEditor: playgroundEditor,
+    codeRunner,
+    consoleOutput: new Console(codeOutputsEl),
+    fileName: "playground.py",
+  });
 
   // Set up the tabs to work.
   instructorCodeTab.addEventListener("click", () => selectTab(INSTRUCTOR_TAB));

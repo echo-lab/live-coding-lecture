@@ -5,6 +5,7 @@ export function initializeRunInteractions({
   codeEditor,
   codeRunner,
   consoleOutput,
+  fileName = "instructor.py",
 }) {
   let running = false;
   let el = runButtonEl;
@@ -19,7 +20,7 @@ export function initializeRunInteractions({
     let code = codeEditor.currentCode();
     let res = await codeRunner.asyncRun(code);
     await minRunTime;
-    consoleOutput.addResult(res);
+    consoleOutput.addResult({ fileName, ...res });
 
     el.classList.remove("in-progress");
     el.disabled = false;

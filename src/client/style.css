@@ -41,8 +41,9 @@ h1 {
 #app {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
-  padding-top: 1rem;
+  /* padding: 2rem; */
+  padding: 1rem 1rem 0rem 1rem;
+  /* padding-top: 1rem; */
   /* text-align: center; */
 }
 
@@ -133,9 +134,17 @@ h2 {
 }
 
 
-.code-typing-interface #all-code-outputs {
+/* .code-typing-interface #all-code-outputs { */
+#all-code-outputs {
   overflow-y: auto;
-  height: 150px;
+}
+
+#student-notes-interface #all-code-outputs {
+  padding: 1rem;
+}
+
+.code-typing-interface #all-code-outputs {
+  height: 150px; /* TODO: make this like the student notes interface... */
 }
 
 /* .stdout-line pre { */
