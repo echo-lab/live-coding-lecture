@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Coding Lecture</title>
+  </head>
+  <body class="code-typing-interface">
+    <div id="app">
+      <!-- <h2>Type-Along Code Notes</h2> -->
+      <div class="topbar">
+        <!-- <div id="run-button-holder"> -->
+        <div class="topbar-left">
+          <h2>Type-Along Code Notes</h2>
+        </div>
+        <button id="run-button">▶ ️Run</button>
+        <!-- </div> -->
+        <div class="topbar-right">
+          <span>
+            <span id="student-email"></span>
+            <a href="#" id="change-email" hidden>(change)</a>
+          </span>
+        </div>
+      </div>
+      <div class="parent-container">
+        <div id="code-container" class="code-container"></div>
+      </div>
+      <div id="output-container">
+        <h2>Output</h2>
+        <div id="code-output-text">
+          <div class="stdout-line"><pre> > One line of std out</pre></div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/client/student-typealong.js"></script>
+  </body>
+</html>
