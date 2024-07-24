@@ -105,16 +105,17 @@ export class TypealongSession extends Model {
     return reconstructCMDoc(changes);
   }
 
-  async addChanges(changes) {
+  async recordCodeChanges(changes) {
     let currentVersion = await this.countTypealongChanges();
     // Should probs check more lol
     // But: we assume it's in order and that there are no gaps :P
-    for (let ch of changes) {
-      if (ch.changeNumber !== currentVersion) continue;
+    // for (let ch of changes) {
+    for (let { changeNumber, changesetJSON, ts } of changes) {
+      if (changeNumber !== currentVersion) continue;
       await this.createTypealongChange({
-        change_number: ch.changeNumber,
-        change: JSON.stringify(ch.changes),
-        change_ts: ch.ts,
+        change_number: changeNumber,
+        change: JSON.stringify(changesetJSON),
+        change_ts: ts,
       });
       currentVersion++;
     }
@@ -158,7 +159,9 @@ TypealongSession.hasMany(TypealongChange, { foreignKey: "TypealongChangeId" });
 TypealongChange.belongsTo(TypealongSession);
 
 export class NotesSession extends Model {
-  // SLOW-ish
+  // Returns all the deltas, in order.
+  // TODO: consider calculating the resulting Delta (i.e., the current document)
+  // on server-side.
   async getDeltas() {
     let res = await this.getNotesChanges({
       attributes: ["change", "change_number"],
@@ -190,16 +193,18 @@ export class NotesSession extends Model {
     return reconstructCMDoc(changes);
   }
 
-  async addCodeChanges(changes) {
+  async recordCodeChanges(changes) {
     let currentVersion = await this.countPlaygroundCodeChanges();
-    for (let { changeNumber, changeset, ts } of changes) {
+    for (let { changeNumber, changesetJSON, ts } of changes) {
       if (changeNumber !== currentVersion) continue;
       await this.createPlaygroundCodeChange({
         change_number: changeNumber,
-        change: JSON.stringify(changes),
+        change: JSON.stringify(changesetJSON),
         change_ts: ts,
-      })
+      });
+      currentVersion++;
     }
+    return currentVersion;
   }
 }
 

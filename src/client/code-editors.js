@@ -21,7 +21,7 @@ Flushed data in format:
   sessionNumber: 1,
   email: "test@test.com",
   changes: [{
-    changes: ChangeSet().toJSON(),
+    changesetJSON: ChangeSet().toJSON(),
     changeNumber: docVersion,
     ts: Date.now(),
   }, ... ]
@@ -80,7 +80,7 @@ export class StudentCodeEditor {
     if (!this.flushUrl) return;
     viewUpdate.transactions.forEach((tr) => {
       this.queuedChanges.push({
-        changes: tr.changes.toJSON(),
+        changesetJSON: tr.changes.toJSON(),
         changeNumber: this.docVersion,
         ts: Date.now(),
       });

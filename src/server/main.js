@@ -90,6 +90,12 @@ app.get("/instructor-changes/:docversion", async (req, res) => {
   res.json({ changes });
 });
 
+// Create a session if it doesn't exist.
+// Returns info about:
+//   1) the instructor's code (doc/version)
+//   2) the student's playground code (doc/version)
+//   3) the student's notes (list of changes (Deltas))
+//   4) the session Number
 app.post("/current-session-notes", async (req, res) => {
   let email = req.body?.email;
   if (!email) {
@@ -113,21 +119,14 @@ app.post("/current-session-notes", async (req, res) => {
       : await lecture.createNotesSession({ email });
 
   // Just return all the changes so far... lol
-  let changes = await sesh.getDeltas();
+  let notesDocChanges = await sesh.getDeltas();
 
-  // Now: also we need to get the current instructor doc and docVersion!
-
-  // let { doc, docVersion } = await sesh.getCurrentDoc(); // Returns a Delta...
-  // let sesh = await cacher.getCurrentSession();
-  // if (sesh) {
-  //   let { doc, docVersion } = sesh;
-  //   res.json({ doc: doc.toJSON(), docVersion, sessionNumber: sesh.id });
-  // } else {
-  //   res.json({ doc: null, docVersion: null });
-  // }
+  // Get the current code-mirror doc and version from the playground code editor.
+  let { doc, docVersion } = await sesh.currentPlaygroundCode();
 
   res.json({
-    notesDocChanges: changes,
+    playgroundCodeInfo: { doc, docVersion },
+    notesDocChanges,
     sessionNumber: lecture.id,
     lectureDoc: lecture.doc,
     lectureDocVersion: lecture.docVersion,
@@ -158,9 +157,7 @@ app.post("/record-notes-changes", async (req, res) => {
 
   let committedVersion = await sesh.addChanges(changes);
   res.json({ committedVersion });
-
 });
-
 
 app.post("/current-session-typealong", async (req, res) => {
   let email = req.body?.email;
@@ -189,6 +186,14 @@ app.post("/current-session-typealong", async (req, res) => {
 });
 
 app.post("/record-typealong-changes", async (req, res) => {
+  await recordBatchCodeChanges(req, res, true);
+});
+
+app.post("/record-playground-changes", async (req, res) => {
+  await recordBatchCodeChanges(req, res, false);
+});
+
+async function recordBatchCodeChanges(req, res, isTypealong) {
   let email = req.body?.email;
   let sessionNumber = req.body?.sessionNumber;
   let changes = req.body?.changes;
@@ -198,24 +203,25 @@ app.post("/record-typealong-changes", async (req, res) => {
   }
 
   let lecture = await LectureSession.findByPk(sessionNumber);
-  // let lecture = await cacher.getCurrentSession();
   if (!lecture) {
     res.json({ error: "no session" });
     return;
   }
 
-  let sesh = await lecture.getTypealongSessions({ where: { email } });
+  let sesh = isTypealong
+    ? await lecture.getTypealongSessions({ where: { email } })
+    : await lecture.getNotesSessions({ where: { email } });
+
   if (sesh.length === 0) {
-    res.json({ error: "typealong session not started?" });
-    console.warn("This shouldn't happen!");
+    res.json({ error: "student session not started?" });
+    console.warn("Student session not started???");
     return;
-    // We can probably just make one then.
   }
   sesh = sesh[0];
 
-  let committedVersion = await sesh.addChanges(changes);
+  let committedVersion = await sesh.recordCodeChanges(changes);
   res.json({ committedVersion });
-});
+}
 
 // ViteExpress.listen(app, 3000, () =>
 //   console.log("Server is listening on port 3000..."),

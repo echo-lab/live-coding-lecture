@@ -77,8 +77,6 @@ let selectTab = (tab) => {
 
   // runButton.style.display = tab === INSTRUCTOR_TAB ? "none" : "grid";
 };
-instructorCodeTab.addEventListener("click", () => selectTab(INSTRUCTOR_TAB));
-playgroundCodeTab.addEventListener("click", () => selectTab(PLAYGROUND_TAB));
 
 //////////////////
 // Notes Editor //
@@ -224,6 +222,8 @@ async function attemptInitialization() {
   console.log(res);
 
   let { notesDocChanges, sessionNumber, lectureDoc, lectureDocVersion } = res;
+  let playgroundDoc = res.playgroundCodeInfo.doc;
+  let playgroundDocVersion = res.playgroundCodeInfo.docVersion;
 
   let notesEditor = new NotesEditor(
     NOTES_CONTAINER_ID,
@@ -241,15 +241,20 @@ async function attemptInitialization() {
 
   let playgroundEditor = new StudentCodeEditor({
     node: playgroundCodeContainer,
-    doc: "\n",
-    docVersion: 0,
+    doc: playgroundDoc,
+    docVersion: playgroundDocVersion,
     sessionNumber,
     email,
-    flushUrl: null,
+    flushUrl: "/record-playground-changes",
     onNewSnapshot: notesEditor.createAnchor.bind(notesEditor, "student"),
   });
   playgroundCodeContainer.style.display = "none"; // Not sure why we have to do this again...
 
+  // Set up the tabs to work.
+  instructorCodeTab.addEventListener("click", () => selectTab(INSTRUCTOR_TAB));
+  playgroundCodeTab.addEventListener("click", () => selectTab(PLAYGROUND_TAB));
+
+  // If you click "Open in playground" it should switch to the playground tab and flash.
   [playgroundCodeTab, playgroundCodeContainer].forEach((el) =>
     el.addEventListener("animationend", () =>
       el.classList.remove("just-changed-tab")
