@@ -255,13 +255,15 @@ async function attemptInitialization() {
 
   // Set up the run button for the playground tab.
   let codeRunner = new PythonCodeRunner();
+  let consoleOutput = new Console(codeOutputsEl);
   initializeRunInteractions({
     runButtonEl,
     codeEditor: playgroundEditor,
     codeRunner,
-    consoleOutput: new Console(codeOutputsEl),
+    consoleOutput,
     fileName: "playground.py",
   });
+  socket.on("instructor code run", (msg) => consoleOutput.addResult(msg));
 
   // Set up the tabs to work.
   instructorCodeTab.addEventListener("click", () => selectTab(INSTRUCTOR_TAB));

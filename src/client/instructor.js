@@ -74,6 +74,7 @@ function initialize({ doc = null, docVersion = null, sessionNumber = null }) {
     codeEditor,
     codeRunner,
     consoleOutput,
+    broadcastResult: (msg) => socket.emit("instructor code run", msg),
   });
 
   endButton.addEventListener("click", async () => {

@@ -6,6 +6,7 @@ export function initializeRunInteractions({
   codeRunner,
   consoleOutput,
   fileName = "instructor.py",
+  broadcastResult = () => {},
 }) {
   let running = false;
   let el = runButtonEl;
@@ -21,6 +22,7 @@ export function initializeRunInteractions({
     let res = await codeRunner.asyncRun(code);
     await minRunTime;
     consoleOutput.addResult({ fileName, ...res });
+    broadcastResult({fileName, ...res}); // A no-op in student interfaces.
 
     el.classList.remove("in-progress");
     el.disabled = false;

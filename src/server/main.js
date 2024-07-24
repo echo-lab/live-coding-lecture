@@ -245,6 +245,11 @@ io.on("connection", async (socket) => {
     }
   });
 
+  // Forward info about code runs.
+  socket.on("instructor code run", (msg) => {
+    io.emit("instructor code run", msg);
+  });
+
   // Forward/push this so the students stop writing.
   socket.on("end session", (msg) => {
     io.emit("end session", msg);
