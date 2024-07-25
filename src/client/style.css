@@ -137,6 +137,7 @@ h2 {
 /* .code-typing-interface #all-code-outputs { */
 #all-code-outputs {
   overflow-y: auto;
+  scroll-behavior: smooth;
 }
 
 #student-notes-interface #all-code-outputs {
