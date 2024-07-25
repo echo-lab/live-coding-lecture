@@ -197,10 +197,20 @@ pre {
   background-color: rgba(195, 242, 56, 0.5);
 }
 
+@keyframes blink-cursor {
+  0%  {border: solid 1px #da00ff;}
+  49%  {border: solid 1px #da00ff;}
+  50%  {border: none;}
+  99%  {border: none;}
+}
+
 .cm-instructor-cursor {
-  border: solid 1px #da00ff;
+  /* border: solid 1px #da00ff; */
   position: absolute;
   height: 1.1em;
+  animation-name: blink-cursor;
+  animation-duration: 1.2s;
+  animation-iteration-count: infinite;
 }
 
 .cm-highlight :hover {

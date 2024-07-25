@@ -59,6 +59,7 @@ export class CodeSnapshotBlot extends BlockEmbed {
 
     let codeSnippetContainer = document.createElement("div");
     codeSnippetContainer.classList.add("code-snippet-container");
+    codeSnippetContainer.classList.add("uneditable");
     setupCodeMirror(
       codeSnippetContainer,
       snippet,

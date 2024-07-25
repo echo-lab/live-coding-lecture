@@ -163,5 +163,10 @@
 
 .just-changed-tab {
   animation-name: flash-tab-change;
-  animation-duration: 2s;
+  animation-duration: 1.2s;
+}
+
+
+.uneditable {
+  background-color: #f5f5f9;
 }
