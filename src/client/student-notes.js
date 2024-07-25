@@ -1,24 +1,14 @@
 import "./style.css";
 import "./style-notes.css";
-import "quill/dist/quill.core.css";
-import "quill/dist/quill.snow.css";
 
-import Quill from "quill";
-import { CodeSnapshotBlot } from "./codesnapshot.js";
-
-import { getEmail } from "./utils.js";
+import { getEmail, POST_JSON_REQUEST } from "./utils.js";
 
 import { io } from "socket.io-client";
 import { CodeFollowingEditor, StudentCodeEditor } from "./code-editors.js";
 import { PythonCodeRunner } from "./code-runner.js";
-import { Console, initializeRunInteractions } from "./code-running-ui.js";
+import { Console, initializeRunInteractions } from "./shared-interactions.js";
 import { CLIENT_TYPE } from "../shared-constants.js";
-
-const Delta = Quill.import("delta");
-
-const JSON_HEADERS = { "Content-Type": "application/json" };
-const GET_JSON_REQUEST = { method: "GET", headers: JSON_HEADERS };
-const POST_JSON_REQUEST = { method: "POST", headers: JSON_HEADERS };
+import { NotesEditor } from "./notes-editor.js";
 
 const FLUSH_CHANGES_FREQ = /*seconds=*/ 3 * 1000;
 
@@ -59,7 +49,6 @@ changeEmailLink.addEventListener("click", () => {
 // window.getDocVersion = () => docVersion;
 // SOCKET IO lol
 const socket = io();
-Quill.register(CodeSnapshotBlot);
 
 const INSTRUCTOR_TAB = 0;
 const PLAYGROUND_TAB = 1;
@@ -82,139 +71,11 @@ let selectTab = (tab) => {
   // runButton.style.display = tab === INSTRUCTOR_TAB ? "none" : "grid";
 };
 
-//////////////////
-// Notes Editor //
-//////////////////
-
-class NotesEditor {
-  constructor(nodeId, deltas, sessionNumber) {
-    this.queuedDeltas = [];
-    this.localVersionNum = deltas.length;
-    this.serverVersionNum = deltas.length;
-    this.sessionNumber = sessionNumber;
-    this.active = true;
-
-    this.quill = new Quill(nodeId, {
-      modules: {
-        clipboard: {
-          matchers: [[".code-snapshot", (node, delta) => delta]],
-          // matchers: [[".code-snapshot"]],
-        },
-        toolbar: {
-          // container: toolbarId,
-          container: [[{ header: [1, false] }], ["bold", { list: "bullet" }]],
-        },
-      },
-      placeholder: "Your notes here...",
-      theme: "snow", // or 'bubble'
-    });
-
-    // Calculate the new document
-    let doc = new Delta([{ insert: "\n" }]);
-    // console.log("Deltas: ", deltas);
-    deltas
-      .map(({ change }) => new Delta(JSON.parse(change)))
-      .forEach((change) => {
-        // console.log("applying delta: ", change);
-        doc = doc.compose(change);
-      });
-    this.quill.setContents(doc, Quill.sources.SILENT);
-
-    this.quill.on("text-change", this.onEditorChange.bind(this));
-  }
-
-  getDocVersion() {
-    return this.localVersionNum;
-  }
-
-  endSession() {
-    this.active = false;
-  }
-
-  createAnchor(
-    source,
-    {
-      id,
-      selection,
-      selectionPosition,
-      fullCode,
-      context,
-      relativeSelectionPosition,
-    }
-  ) {
-    // handleCodeAnchor && handleCodeAnchor({ selection, context, relativeSelectionPosition, fullCode, id });
-    let { from: highlightStart, to: highlightEnd } = relativeSelectionPosition;
-    let { from: selectionStart, to: selectionEnd } = selectionPosition;
-
-    const range = this.quill.getSelection(true);
-    let snippet = context;
-    this.quill.insertText(range.index, "\n", Quill.sources.USER);
-    this.quill.insertEmbed(
-      range.index + 1,
-      "codesnapshot",
-      {
-        id,
-        snippet,
-        highlightStart,
-        highlightEnd,
-        selectionStart,
-        selectionEnd,
-        fullCode,
-      },
-      Quill.sources.USER
-    );
-    this.quill.setSelection(range.index + 2, Quill.sources.SILENT);
-  }
-
-  onEditorChange(delta, oldDelta, source) {
-    // console.log({ delta, oldDelta, source });
-    console.log(delta);
-    this.queuedDeltas.push({
-      delta,
-      ts: Date.now(),
-      changeNumber: this.localVersionNum,
-    });
-    this.localVersionNum++;
-  }
-
-  async flushChangesToServer() {
-    if (this.queuedDeltas.length === 0 || !this.active) return;
-
-    let payload = {
-      sessionNumber: this.sessionNumber,
-      changes: this.queuedDeltas,
-      email,
-    };
-
-    const response = await fetch("/record-notes-changes", {
-      body: JSON.stringify(payload),
-      ...POST_JSON_REQUEST,
-    });
-    const res = await response.json();
-
-    if (res.error) {
-      console.warn("ACK! could not flush to server...?");
-    } else {
-      this.serverVersionNum = res.committedVersion;
-      this.queuedDeltas = this.queuedDeltas.filter(
-        (d) => d.changeNumber >= this.serverVersionNum
-      );
-      if (this.queuedDeltas.length > 0) {
-        console.warn("queued changes is not empty?!?");
-      } else {
-        console.log("Successfully flushed changes!");
-      }
-    }
-  }
-}
-
 //////////////////////////////////////////////////////
 // OKAY: wait until a session starts to initialize
 //////////////////////////////////////////////////////
 
 async function attemptInitialization() {
-  // const response = await fetch("/current-session", GET_JSON_REQUEST);
-
   const response = await fetch("../current-session-notes", {
     body: JSON.stringify({ email }),
     ...POST_JSON_REQUEST,
@@ -233,11 +94,12 @@ async function attemptInitialization() {
   let playgroundDoc = res.playgroundCodeInfo.doc;
   let playgroundDocVersion = res.playgroundCodeInfo.docVersion;
 
-  let notesEditor = new NotesEditor(
-    NOTES_CONTAINER_ID,
-    notesDocChanges,
-    sessionNumber
-  );
+  let notesEditor = new NotesEditor({
+    nodeId: NOTES_CONTAINER_ID,
+    deltas: notesDocChanges,
+    sessionNumber,
+    email,
+  });
 
   let instructorEditor = new CodeFollowingEditor(
     instructorCodeContainer,

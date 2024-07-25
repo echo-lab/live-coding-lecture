@@ -6,12 +6,8 @@ import {
   followInstructorExtensions,
   setInstructorSelection,
 } from "./cm-extensions.js";
+import { GET_JSON_REQUEST, POST_JSON_REQUEST } from "./utils.js";
 
-const JSON_HEADERS = {
-  "Content-Type": "application/json",
-  Accept: "application/json",
-};
-const POST_REQUEST = { method: "POST", headers: JSON_HEADERS };
 const FLUSH_CHANGES_FREQ = /*seconds=*/ 3 * 1000;
 
 /*
@@ -85,6 +81,7 @@ export class StudentCodeEditor {
         changeNumber: this.docVersion,
         ts: Date.now(),
       });
+      // console.log("recording change: ", tr.changes);
       this.docVersion++;
     });
   }
@@ -116,7 +113,7 @@ export class StudentCodeEditor {
     };
     const response = await fetch(this.flushUrl, {
       body: JSON.stringify(payload),
-      ...POST_REQUEST,
+      ...POST_JSON_REQUEST,
     });
     let res = await response.json();
     if (res.error) {

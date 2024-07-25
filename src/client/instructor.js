@@ -1,13 +1,10 @@
 import "./style.css";
 
 import { io } from "socket.io-client";
-import { EXAMPLE_CODE, getIdentity } from "./utils.js";
+import { GET_JSON_REQUEST, getIdentity, POST_JSON_REQUEST } from "./utils.js";
 
-import { EditorView } from "codemirror";
-import { EditorState, Text } from "@codemirror/state";
 import { PythonCodeRunner } from "./code-runner.js";
-import { basicExtensions } from "./cm-extensions.js";
-import { Console, initializeRunInteractions } from "./code-running-ui.js";
+import { Console, initializeRunInteractions } from "./shared-interactions.js";
 import { InstructorCodeEditor } from "./code-editors.js";
 import { CLIENT_TYPE } from "../shared-constants.js";
 
@@ -17,10 +14,6 @@ const endButton = document.querySelector("#end-session-butt");
 const sessionDetails = document.querySelector("#session-details");
 const runButtonEl = document.querySelector("#run-button");
 const outputCodeContainer = document.querySelector("#all-code-outputs");
-
-const JSON_HEADERS = { "Content-Type": "application/json" };
-const GET_JSON_OPTIONS = { method: "GET", headers: JSON_HEADERS };
-const POST_JSON_OPTIONS = { method: "POST", headers: JSON_HEADERS };
 
 const socket = io();
 let uid = getIdentity();
@@ -34,7 +27,7 @@ let uid = getIdentity();
 // Initialize w/ the Server
 ///////////////////////////////
 async function getOrCreateSession(createIfNoSesh) {
-  const ops = createIfNoSesh ? POST_JSON_OPTIONS : GET_JSON_OPTIONS;
+  const ops = createIfNoSesh ? POST_JSON_REQUEST : GET_JSON_REQUEST;
   const response = await fetch("/current-session", ops);
   let res = await response.json();
   res.sessionNumber && initialize(res);
@@ -85,7 +78,7 @@ function initialize({ doc = null, docVersion = null, sessionNumber = null }) {
     endButton.disabled = true;
     sessionDetails.textContent += " (Terminated)";
     codeEditor.endSession();
-    const response = await fetch("/end-session", POST_JSON_OPTIONS);
+    const response = await fetch("/end-session", POST_JSON_REQUEST);
     let res = await response.json();
     if (res.error) console.warning("Could not close session!");
     socket.emit("end session", { sessionNumber });

@@ -1,4 +1,5 @@
 import { CLIENT_TYPE, USER_ACTIONS } from "../shared-constants";
+import { POST_JSON_REQUEST } from "./utils";
 
 const MAX_OUTPUT_LENGTH = 50;
 
@@ -38,9 +39,8 @@ export function initializeRunInteractions({
       email,
     };
     fetch("/record-user-action", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      ...POST_JSON_REQUEST,
     });
 
     let minRunTime = new Promise((resolve) => setTimeout(resolve, 500));

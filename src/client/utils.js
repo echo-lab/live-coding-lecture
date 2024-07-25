@@ -1,12 +1,14 @@
+export const JSON_HEADERS = { "Content-Type": "application/json" };
+export const GET_JSON_REQUEST = { method: "GET", headers: JSON_HEADERS };
+export const POST_JSON_REQUEST = { method: "POST", headers: JSON_HEADERS };
+
 export function makeID() {
   return crypto.randomUUID();
 }
 
 export function getEmail() {
-  console.log("hi");
   let email = localStorage.getItem("user_email");
-  if (email && email !== 'null') return email;
-  console.log("there");
+  if (email && email !== "null") return email;
   email = prompt("Please enter your email");
   localStorage.setItem("user_email", email);
   return email;
@@ -17,13 +19,12 @@ export function clearEmail() {
 }
 
 export function getIdentity() {
-    let uid = localStorage.getItem("user_id");
-    if (uid) return uid;
-    uid = makeID();
-    localStorage.setItem("user_id", uid);
-    return uid;
+  let uid = localStorage.getItem("user_id");
+  if (uid) return uid;
+  uid = makeID();
+  localStorage.setItem("user_id", uid);
+  return uid;
 }
-
 
 export const EXAMPLE_CODE = `# Here is some example code
 
@@ -44,4 +45,4 @@ def fibonacci(n):
       continue
     fibs.append(fibs[i-1]+fibs[i-2])
   return fibs[-1]
-`
+`;
