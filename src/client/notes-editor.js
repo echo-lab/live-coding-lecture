@@ -1,7 +1,10 @@
 import "quill/dist/quill.core.css";
 import "quill/dist/quill.snow.css";
 
-import { CodeSnapshotBlot } from "./codesnapshot.js";
+import {
+  CodeSnapshotBlot,
+  createHTMLForCopyWorkaround,
+} from "./codesnapshot.js";
 
 import Quill from "quill";
 import { POST_JSON_REQUEST } from "./utils.js";
@@ -10,7 +13,7 @@ Quill.register(CodeSnapshotBlot);
 const Delta = Quill.import("delta");
 
 export class NotesEditor {
-  constructor({nodeId, deltas, sessionNumber, email}) {
+  constructor({ nodeId, deltas, sessionNumber, email }) {
     this.queuedDeltas = [];
     this.localVersionNum = deltas.length;
     this.serverVersionNum = deltas.length;
@@ -22,7 +25,6 @@ export class NotesEditor {
       modules: {
         clipboard: {
           matchers: [[".code-snapshot", (node, delta) => delta]],
-          // matchers: [[".code-snapshot"]],
         },
         toolbar: {
           // container: toolbarId,
@@ -45,6 +47,60 @@ export class NotesEditor {
     this.quill.setContents(doc, Quill.sources.SILENT);
 
     this.quill.on("text-change", this.onEditorChange.bind(this));
+
+    // This ensures that we highlight any code snapshots which are selected in the editor.
+    this.quill.on("selection-change", (range, oldRange, source) => {
+      document.querySelectorAll(".code-snapshot").forEach((el) => {
+        let snapshot = Quill.find(el, true);
+        if (!(snapshot instanceof CodeSnapshotBlot)) return;
+
+        let x = snapshot.offset(this.quill.scroll);
+        let { index, length } = range;
+        if (index <= x && x < index + length) {
+          el.classList.add("selected");
+        } else {
+          el.classList.remove("selected");
+        }
+      });
+    });
+
+    // Borrowed from discussion at: https://github.com/slab/quill/issues/3006
+    let copySnapshotWorkaround = (ev, cutting) => {
+      if (!ev.copyFromQuill) return;
+      // ev.copyFromQuill is true, which means that the copy event originally came from
+      // Code Mirror, but no text was selected. Thus, the user is trying to copy the whole code snippet,
+      // which doesn't work unless we do something :)
+      // What we're doing here is replacing the copy text w/ some HTML which can be matched by
+      // our custom matcher because it has the correct class and fields for a CodeSnapshotBlot.
+      let ops = this.quill.getContents(this.quill.getSelection()).ops;
+      if (ops && ops.length !== 0 && ops[0].insert["codesnapshot"]) {
+        let snapshot = ops[0].insert["codesnapshot"];
+        ev.clipboardData.setData(
+          "text/html",
+          createHTMLForCopyWorkaround(snapshot)
+        );
+        if (cutting) {
+          console.log("HI");
+          let { index, length } = this.quill.getSelection();
+          this.quill.deleteText(index, length, "user");
+        }
+      }
+      ev.preventDefault();
+    };
+
+    document
+      .querySelector(nodeId)
+      .addEventListener("copy", (ev) => copySnapshotWorkaround(ev, false));
+    document
+      .querySelector(nodeId)
+      .addEventListener("cut", (ev) => copySnapshotWorkaround(ev, true));
+
+    // If we click on a code snapshot, we need to manually select it w/ Quill.
+    this.quill.root.addEventListener("click", (ev) => {
+      let snapshot = Quill.find(ev.target, true);
+      if (!(snapshot instanceof CodeSnapshotBlot)) return;
+      this.quill.setSelection(snapshot.offset(this.quill.scroll), 1, "user");
+    });
   }
 
   getDocVersion() {

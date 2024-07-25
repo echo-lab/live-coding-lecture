@@ -88,12 +88,31 @@ export class CodeSnapshotBlot extends BlockEmbed {
   }
 }
 
+const FIELD_NAMES = {
+  id: "id",
+  snippet: "snippet",
+  fullCode: "full-code",
+  highlightStart: "highlight-start",
+  highlightEnd: "highlight-end",
+  selectionStart: "selection-start",
+  selectionEnd: "selection-end",
+};
+
+export function createHTMLForCopyWorkaround(blotFields) {
+  let dataFields = Object.entries(blotFields).reduce(
+    (str, [key, val]) => `${str} data-${FIELD_NAMES[key]}="${val}"`,
+    ""
+  );
+
+  return `<div class="code-snapshot" ${dataFields}></div>`;
+}
+
 // TODO: look more at possible setup:
 // https://github.com/codemirror/basic-setup/blob/b3be7cd30496ee578005bd11b1fa6a8b21fcbece/src/codemirror.ts#L50
 function setupCodeMirror(node, code, highlightStart, highlightEnd) {
   highlightStart = parseInt(highlightStart);
   highlightEnd = parseInt(highlightEnd);
-  let shouldAddHighlight = highlightStart < highlightEnd && highlightStart >= 0;
+  // let shouldAddHighlight = highlightStart < highlightEnd && highlightStart >= 0;
 
   // Take care of the highlight?
   const highlightDecoField = StateField.define({
@@ -128,5 +147,17 @@ function setupCodeMirror(node, code, highlightStart, highlightEnd) {
     state,
     parent: node,
   });
+
+  ["copy", "cut"].forEach((eventName) => {
+    node.addEventListener(eventName, (ev) => {
+      let s = view.state.selection.main;
+      let { from, to } = s;
+      if (s.empty || view.state.sliceDoc(from, to).match(/^\s+$/)) {
+        // Empty or all whitespace -- should copy from the Quill editor instead.
+        ev.copyFromQuill = true; // Attach for bubbling up :)
+      }
+    });
+  });
+
   return view;
 }

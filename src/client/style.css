@@ -252,11 +252,18 @@ pre {
   grid-template-areas: "left-section run-button email";
 }
 
-#run-button {
+.run-button-grid {
   display: grid;
   grid-area: run-button;
   justify-self: center;
   align-self: center;
+}
+
+#run-button {
+  /* display: grid;
+  grid-area: run-button;
+  justify-self: center;
+  align-self: center; */
   background-color: #7aeb7d;
   border-radius: 8px;
   color: #004a0d;
