@@ -22,12 +22,6 @@ export class CodeSnapshotBlot extends BlockEmbed {
     fullCode,
   }) {
     let node = super.create();
-    console.log("creating snapshot!: ", {
-      id,
-      snippet,
-      highlightStart,
-      highlightEnd,
-    });
     // contentEditable=false ==> you don't get a cursor in the button text.
     node.contentEditable = false;
     node.dataset.id = id;
@@ -61,15 +55,7 @@ export class CodeSnapshotBlot extends BlockEmbed {
     let showcode = document.createElement("button");
     showcode.textContent = "Open in Playground";
     showcode.classList.add("try-it-out");
-    // showcode.id = "show-original";
     header.appendChild(showcode);
-    // showcode.addEventListener("click", (e) => {
-    //   return;
-    // });
-    //   e.preventDefault();
-    //   console.log("opening modal?");
-    //   fullCodeModal.classList.add("open");
-    // });
 
     let codeSnippetContainer = document.createElement("div");
     codeSnippetContainer.classList.add("code-snippet-container");

@@ -81,7 +81,6 @@ export class StudentCodeEditor {
         changeNumber: this.docVersion,
         ts: Date.now(),
       });
-      // console.log("recording change: ", tr.changes);
       this.docVersion++;
     });
   }

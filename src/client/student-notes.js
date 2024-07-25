@@ -7,7 +7,7 @@ import { io } from "socket.io-client";
 import { CodeFollowingEditor, StudentCodeEditor } from "./code-editors.js";
 import { PythonCodeRunner } from "./code-runner.js";
 import { Console, initializeRunInteractions } from "./shared-interactions.js";
-import { CLIENT_TYPE } from "../shared-constants.js";
+import { CLIENT_TYPE, USER_ACTIONS } from "../shared-constants.js";
 import { NotesEditor } from "./notes-editor.js";
 
 const FLUSH_CHANGES_FREQ = /*seconds=*/ 3 * 1000;
@@ -88,7 +88,6 @@ async function attemptInitialization() {
     setTimeout(attemptInitialization, 5000);
     return;
   }
-  console.log(res);
 
   let { notesDocChanges, sessionNumber, lectureDoc, lectureDocVersion } = res;
   let playgroundDoc = res.playgroundCodeInfo.doc;
@@ -145,32 +144,52 @@ async function attemptInitialization() {
     )
   );
 
+  function loadPlaygroundCode(code, actionType) {
+    // Log it on the server.
+    let payload = {
+      ts: Date.now(),
+      docVersion: notesEditor.getDocVersion(),
+      codeVersion: playgroundEditor.getDocVersion(),
+      actionType,
+      sessionNumber,
+      source: CLIENT_TYPE.NOTES,
+      email,
+    };
+    fetch("/record-user-action", {
+      body: JSON.stringify(payload),
+      ...POST_JSON_REQUEST,
+    });
+
+    // Replace the code in the playground and switch to that tab.
+    playgroundEditor.replaceContents(code);
+    selectTab(PLAYGROUND_TAB);
+    playgroundCodeTab.classList.add("just-changed-tab");
+    playgroundCodeContainer.classList.add("just-changed-tab");
+  }
+
   notesContainer.addEventListener("click", (e) => {
     let el = e.target;
     if (el.tagName !== "BUTTON" || !el.classList.contains("try-it-out")) return;
 
     el = el.closest(".code-snapshot");
-    if (!el) {
+    if (el) {
+      loadPlaygroundCode(
+        el.dataset.fullCode,
+        USER_ACTIONS.OPEN_SNAPSHOT_PLAYGROUND
+      );
+    } else {
       console.warning("couldn't find code snapshot...");
-      return;
     }
-
-    // TODO: emit some event to the server? (maybe in the CodeEditor... but maybe
-    // pass in the provenance).
-    playgroundEditor.replaceContents(el.dataset.fullCode);
-    selectTab(PLAYGROUND_TAB);
-    playgroundCodeTab.classList.add("just-changed-tab");
-    playgroundCodeContainer.classList.add("just-changed-tab");
   });
-  window.inst = instructorCodeContainer;
+
   document
     .querySelector("#try-instructor-code")
-    .addEventListener("click", () => {
-      playgroundEditor.replaceContents(instructorEditor.currentCode());
-      selectTab(PLAYGROUND_TAB);
-      playgroundCodeTab.classList.add("just-changed-tab");
-      playgroundCodeContainer.classList.add("just-changed-tab");
-    });
+    .addEventListener("click", () =>
+      loadPlaygroundCode(
+        instructorEditor.currentCode(),
+        USER_ACTIONS.OPEN_INST_CODE_PLAYGROUND
+      )
+    );
 
   let flushChangesLoop = setInterval(
     notesEditor.flushChangesToServer.bind(notesEditor),

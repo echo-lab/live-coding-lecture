@@ -92,7 +92,7 @@ export class NotesEditor {
 
   onEditorChange(delta, oldDelta, source) {
     // console.log({ delta, oldDelta, source });
-    console.log(delta);
+    // console.log(delta);
     this.queuedDeltas.push({
       delta,
       ts: Date.now(),
