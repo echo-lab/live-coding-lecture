@@ -7,6 +7,10 @@ let tabSize = new Compartment();
 
 const BlockEmbed = Quill.import("blots/block/embed");
 
+const SNAPSHOT_TEMPLATE = document.querySelector("#snapshot-template");
+const HEADER_TEMPLATE = SNAPSHOT_TEMPLATE.content.children[0];
+const SNAPSHOT_CODE_TEMPLATE = SNAPSHOT_TEMPLATE.content.children[1];
+
 export class CodeSnapshotBlot extends BlockEmbed {
   static blotName = "codesnapshot";
   static tagName = "div";
@@ -22,54 +26,41 @@ export class CodeSnapshotBlot extends BlockEmbed {
     fullCode,
   }) {
     let node = super.create();
-    // contentEditable=false ==> you don't get a cursor in the button text.
     node.contentEditable = false;
-    node.dataset.id = id;
-    node.dataset.snippet = snippet;
-    node.dataset.highlightStart = highlightStart;
-    node.dataset.highlightEnd = highlightEnd;
-    node.dataset.selectionStart = selectionStart;
-    node.dataset.selectionEnd = selectionEnd;
-    node.dataset.fullCode = fullCode;
-
-    let header = document.createElement("div");
-    header.classList.add("code-snapshot-header");
-
-    // Collapse button
-    let collapse = document.createElement("button");
-    collapse.textContent = "collapse";
-    // collapse.classList.add("collapse");
-    header.appendChild(collapse);
-    collapse.addEventListener("click", (e) => {
-      e.preventDefault();
-      node.classList.toggle("collapsed");
+    Object.assign(node.dataset, {
+      id,
+      snippet,
+      highlightStart,
+      highlightEnd,
+      selectionStart,
+      selectionEnd,
+      fullCode,
     });
 
-    let fullCodeModal = createFullCodeModal(
-      fullCode,
-      selectionStart,
-      selectionEnd
-    );
+    let header = HEADER_TEMPLATE.cloneNode(true);
+    let codeSnippetContainer = SNAPSHOT_CODE_TEMPLATE.cloneNode(true);
+    node.appendChild(header);
+    node.appendChild(codeSnippetContainer);
 
-    // Go to code button
-    let showcode = document.createElement("button");
-    showcode.textContent = "Open in Playground";
-    showcode.classList.add("try-it-out");
-    header.appendChild(showcode);
+    let collapseIcon = header.querySelector(".collapse-button");
+    // collapseButton.addEventListener("click", (e) => {
+    header.addEventListener("click", (e) => {
+      if (e.target.classList.contains("try-it-out")) return;
+      e.preventDefault();
+      codeSnippetContainer.classList.toggle("collapsed");
+      collapseIcon.innerText = codeSnippetContainer.classList.contains(
+        "collapsed"
+      )
+        ? "〉"
+        : "﹀";
+    });
 
-    let codeSnippetContainer = document.createElement("div");
-    codeSnippetContainer.classList.add("code-snippet-container");
-    codeSnippetContainer.classList.add("uneditable");
     setupCodeMirror(
       codeSnippetContainer,
       snippet,
       highlightStart,
       highlightEnd
     );
-
-    node.append(header);
-    node.append(codeSnippetContainer);
-    node.append(fullCodeModal);
 
     return node;
   }
@@ -95,78 +86,6 @@ export class CodeSnapshotBlot extends BlockEmbed {
     };
     // return domNode.dataset.id;
   }
-}
-
-function createFullCodeModal(fullCode, highlightStart, highlightEnd) {
-  let modalContainer = document.createElement("div");
-  modalContainer.classList.add("modal");
-
-  let modalContent = document.createElement("div");
-  modalContent.classList.add("modal-content");
-
-  let modalHeader = document.createElement("div");
-  modalHeader.classList.add("modal-header");
-
-  let closeSpan = document.createElement("span");
-  closeSpan.classList.add("close-modal");
-  closeSpan.innerText = "×";
-  closeSpan.addEventListener("click", () =>
-    modalContainer.classList.remove("open")
-  );
-
-  let h2 = document.createElement("h2");
-  h2.innerText = "Original Code";
-
-  // end header
-  let modalBody = document.createElement("div");
-  modalBody.classList.add("modal-body");
-
-  let codeMirrorContainer = document.createElement("div");
-  codeMirrorContainer.classList.add("full-code-context-container");
-
-  modalContainer.appendChild(modalContent);
-  modalContent.appendChild(modalHeader);
-  modalContent.appendChild(modalBody);
-  modalHeader.appendChild(closeSpan);
-  modalHeader.appendChild(h2);
-  modalBody.appendChild(codeMirrorContainer);
-
-  // modalContainer.appendChild(modalHeader);
-  // modalHeader.appendChild(closeSpan);
-  // modalHeader.appendChild(h2);
-  // modalContainer.appendChild(modalContent);
-  // // modalContent.appendChild(closeSpan);
-  // modalContent.appendChild(codeMirrorContainer);
-
-  setupCodeMirror(codeMirrorContainer, fullCode, highlightStart, highlightEnd);
-
-  return modalContainer;
-}
-
-function createFullCodeModal2(fullCode, highlightStart, highlightEnd) {
-  let modalContainer = document.createElement("div");
-  modalContainer.classList.add("modal");
-
-  let modalContent = document.createElement("div");
-  modalContent.classList.add("modal-content");
-
-  let closeSpan = document.createElement("span");
-  closeSpan.classList.add("close-modal");
-  closeSpan.innerText = "×";
-  closeSpan.addEventListener("click", () =>
-    modalContainer.classList.remove("open")
-  );
-
-  let codeMirrorContainer = document.createElement("div");
-  codeMirrorContainer.classList.add("full-code-context-container");
-
-  modalContainer.appendChild(modalContent);
-  modalContent.appendChild(closeSpan);
-  modalContent.appendChild(codeMirrorContainer);
-
-  setupCodeMirror(codeMirrorContainer, fullCode, highlightStart, highlightEnd);
-
-  return modalContainer;
 }
 
 // TODO: look more at possible setup:
