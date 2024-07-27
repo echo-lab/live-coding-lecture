@@ -144,6 +144,14 @@ async function attemptInitialization() {
     )
   );
 
+  // If we're on the playground tab, blink the instructor tab whenever a change happens.
+  socket.on("instructor event", (msg) => {
+    if (!msg.changes) return;
+    if (instructorCodeTab.classList.contains("selected")) return;
+    instructorCodeTab.style.animation = "none";
+    setTimeout(() => (instructorCodeTab.style.animation = ""), 10);
+  });
+
   function loadPlaygroundCode(code, actionType) {
     // Log it on the server.
     let payload = {

@@ -152,9 +152,7 @@ export class CodeFollowingEditor {
     });
     this.view = new EditorView({ state, parent: node });
 
-    socket.on("instructor event", async (msg) => {
-      this.handleInstructorEvent(msg);
-    });
+    socket.on("instructor event", this.handleInstructorEvent.bind(this));
   }
 
   getDocVersion() {

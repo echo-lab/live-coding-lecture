@@ -166,6 +166,21 @@
   animation-duration: 1.2s;
 }
 
+@keyframes flash-instructor-tab {
+  from {
+    background-color: #d3d3ff;
+  }
+  to {
+    /* border-color: lightgrey; */
+    background-color: rgb(244, 244, 244);
+  }
+}
+
+.blink-tab {
+  animation-name: flash-instructor-tab;
+  animation-duration: 0.8s;
+}
+
 .uneditable {
   background-color: #f5f5f9;
 }
