@@ -223,6 +223,7 @@ h2 {
 
 #all-code-outputs.empty {
   color: grey;
+  user-select: none;
 }
 
 pre {
