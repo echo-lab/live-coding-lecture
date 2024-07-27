@@ -92,6 +92,7 @@ async function attemptInitialization() {
   let { notesDocChanges, sessionNumber, lectureDoc, lectureDocVersion } = res;
   let playgroundDoc = res.playgroundCodeInfo.doc;
   let playgroundDocVersion = res.playgroundCodeInfo.docVersion;
+  let sessionActive = true;
 
   let notesEditor = new NotesEditor({
     nodeId: NOTES_CONTAINER_ID,
@@ -131,7 +132,10 @@ async function attemptInitialization() {
     source: CLIENT_TYPE.NOTES,
     email,
   });
-  socket.on("instructor code run", (msg) => consoleOutput.addResult(msg));
+  socket.on(
+    "instructor code run",
+    (msg) => sessionActive && consoleOutput.addResult(msg)
+  );
 
   // Set up the tabs to work.
   instructorCodeTab.addEventListener("click", () => selectTab(INSTRUCTOR_TAB));
@@ -209,6 +213,8 @@ async function attemptInitialization() {
     clearInterval(flushChangesLoop);
     notesEditor.flushChangesToServer();
     notesEditor.endSession();
+    instructorEditor.stopFollowing();
+    sessionActive = false;
   });
 }
 attemptInitialization();

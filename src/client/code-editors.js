@@ -151,6 +151,7 @@ export class CodeFollowingEditor {
       ],
     });
     this.view = new EditorView({ state, parent: node });
+    this.active = true;
 
     socket.on("instructor event", this.handleInstructorEvent.bind(this));
   }
@@ -160,14 +161,17 @@ export class CodeFollowingEditor {
   }
 
   async handleInstructorEvent(msg) {
+    if (!this.active) return;
     if (!msg.cursor && !msg.changes) {
       console.warn("Unexpected message: ", msg);
       return;
     }
 
     if (msg.cursor) {
-      // TODO: Possibly don't update the cursor if we KNOW we're out of sync...
       let { anchor, head } = msg.cursor;
+      // If out of bounds, we're out of sync and we should ignore this.
+      if (anchor > this.view.state.doc.length) return;
+      if (head > this.view.state.doc.length) return;
       this.view.dispatch({
         effects: setInstructorSelection.of({ anchor, head }),
       });
@@ -223,6 +227,10 @@ export class CodeFollowingEditor {
 
   currentCode() {
     return this.view.state.doc.toString();
+  }
+
+  stopFollowing() {
+    this.active = false;
   }
 }
 
