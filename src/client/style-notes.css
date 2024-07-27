@@ -234,10 +234,17 @@
   -moz-user-select: none; /* Firefox */
   -ms-user-select: none; /* IE10+/Edge */
   user-select: none; /* Standard */
+  cursor: pointer;
 }
 
-.code-snapshot-header {
-  cursor: pointer;
+.code-snapshot-header .collapse-button {
+  width: 120px;
+}
+
+.code-snapshot-header .file-info {
+  font-size: medium;
+  font-weight: bold;
+  font-family: "Courier New", monospace;
 }
 
 .code-snapshot-header button {

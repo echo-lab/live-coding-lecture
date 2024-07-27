@@ -105,7 +105,7 @@ async function attemptInitialization() {
     lectureDoc,
     lectureDocVersion,
     socket,
-    notesEditor.createAnchor.bind(notesEditor, "instructor")
+    notesEditor.createAnchor.bind(notesEditor, "instructor.py")
   );
 
   let playgroundEditor = new StudentCodeEditor({
@@ -115,7 +115,7 @@ async function attemptInitialization() {
     sessionNumber,
     email,
     flushUrl: "/record-playground-changes",
-    onNewSnapshot: notesEditor.createAnchor.bind(notesEditor, "student"),
+    onNewSnapshot: notesEditor.createAnchor.bind(notesEditor, "playground.py"),
   });
   playgroundCodeContainer.style.display = "none"; // Not sure why we have to do this again...
 

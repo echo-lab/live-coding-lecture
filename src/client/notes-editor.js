@@ -53,6 +53,7 @@ export class NotesEditor {
       document.querySelectorAll(".code-snapshot").forEach((el) => {
         let snapshot = Quill.find(el, true);
         if (!(snapshot instanceof CodeSnapshotBlot)) return;
+        if (range === null) return;
 
         let x = snapshot.offset(this.quill.scroll);
         let { index, length } = range;
@@ -128,6 +129,7 @@ export class NotesEditor {
 
     const range = this.quill.getSelection(true);
     let snippet = context;
+    let title = `${source} (${new Date().toLocaleTimeString()})`;
     this.quill.insertText(range.index, "\n", Quill.sources.USER);
     this.quill.insertEmbed(
       range.index + 1,
@@ -140,6 +142,7 @@ export class NotesEditor {
         selectionStart,
         selectionEnd,
         fullCode,
+        title,
       },
       Quill.sources.USER
     );

@@ -24,6 +24,7 @@ export class CodeSnapshotBlot extends BlockEmbed {
     selectionStart,
     selectionEnd,
     fullCode,
+    title,
   }) {
     let node = super.create();
     node.contentEditable = false;
@@ -35,10 +36,12 @@ export class CodeSnapshotBlot extends BlockEmbed {
       selectionStart,
       selectionEnd,
       fullCode,
+      title,
     });
 
     let header = HEADER_TEMPLATE.cloneNode(true);
     let codeSnippetContainer = SNAPSHOT_CODE_TEMPLATE.cloneNode(true);
+    header.querySelector(".file-info").innerText = title;
     node.appendChild(header);
     node.appendChild(codeSnippetContainer);
 
@@ -48,11 +51,8 @@ export class CodeSnapshotBlot extends BlockEmbed {
       if (e.target.classList.contains("try-it-out")) return;
       e.preventDefault();
       codeSnippetContainer.classList.toggle("collapsed");
-      collapseIcon.innerText = codeSnippetContainer.classList.contains(
-        "collapsed"
-      )
-        ? "〉"
-        : "﹀";
+      let isCollapsed = codeSnippetContainer.classList.contains("collapsed");
+      collapseIcon.innerText = isCollapsed ? "〉" : "﹀";
     });
 
     setupCodeMirror(
@@ -74,6 +74,7 @@ export class CodeSnapshotBlot extends BlockEmbed {
       highlightEnd,
       selectionStart,
       selectionEnd,
+      title,
     } = domNode.dataset;
     return {
       id,
@@ -83,8 +84,8 @@ export class CodeSnapshotBlot extends BlockEmbed {
       highlightEnd,
       selectionStart,
       selectionEnd,
+      title,
     };
-    // return domNode.dataset.id;
   }
 }
 
@@ -96,6 +97,7 @@ const FIELD_NAMES = {
   highlightEnd: "highlight-end",
   selectionStart: "selection-start",
   selectionEnd: "selection-end",
+  title: "title",
 };
 
 export function createHTMLForCopyWorkaround(blotFields) {
