@@ -5,8 +5,13 @@ import { getEmail, clearEmail, POST_JSON_REQUEST } from "./utils.js";
 
 import { StudentCodeEditor } from "./code-editors.js";
 import { PythonCodeRunner } from "./code-runner.js";
-import { Console, initializeRunInteractions, makeConsoleResizable, setUpChangeEmail } from "./shared-interactions.js";
-import { CLIENT_TYPE } from "../shared-constants.js";
+import {
+  Console,
+  initializeRunInteractions,
+  makeConsoleResizable,
+  setUpChangeEmail,
+} from "./shared-interactions.js";
+import { CLIENT_TYPE, SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
 
 const codeContainer = document.querySelector("#code-container");
 const studentDetailsContainer = document.querySelector("#student-email");
@@ -14,7 +19,7 @@ const changeEmailLink = document.querySelector("#change-email");
 const runButtonEl = document.querySelector("#run-button");
 const outputCodeContainer = document.querySelector("#all-code-outputs");
 const consoleResizer = document.querySelector("#resize-console");
-const codeOutputsContainer = document.querySelector("#output-container")
+const codeOutputsContainer = document.querySelector("#output-container");
 makeConsoleResizable(codeOutputsContainer, consoleResizer);
 
 const socket = io();
@@ -66,7 +71,7 @@ async function attemptInitialization() {
     email,
   });
 
-  socket.on("end session", () => {
+  socket.on(SOCKET_MESSAGE_TYPE.INSTRUCTOR_END_SESSION, () => {
     console.log("SESSION IS ENDED!");
     codeEditor.endSession();
   });

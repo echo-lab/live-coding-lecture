@@ -3,7 +3,7 @@ import ViteExpress from "vite-express";
 import * as http from "http";
 import { Server } from "socket.io";
 import { LectureSession } from "./database.js";
-import { CLIENT_TYPE } from "../shared-constants.js";
+import { CLIENT_TYPE, SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
 
 const app = express();
 
@@ -271,23 +271,30 @@ const io = new Server(server);
 io.on("connection", async (socket) => {
   console.log("a user connected");
 
-  socket.on("instructor event", async (msg) => {
-    io.emit("instructor event", msg);
+  socket.on(SOCKET_MESSAGE_TYPE.INSTRUCTOR_CURSOR, (msg) => {
+    io.emit(SOCKET_MESSAGE_TYPE.INSTRUCTOR_CURSOR, msg);
+  });
+
+  socket.on(SOCKET_MESSAGE_TYPE.INSTRUCTOR_EDIT, async (msg) => {
+    // Forward proactively!
+    io.emit(SOCKET_MESSAGE_TYPE.INSTRUCTOR_EDIT, msg);
+    // FIXME: these might not get executed in order!
 
     if (msg.changes) {
+      console.log(`Change: ${msg.id}`);
       let sesh = await cacher.getCurrentSession();
       sesh && (await sesh.addOneInstructorChange(msg));
     }
   });
 
   // Forward info about code runs.
-  socket.on("instructor code run", (msg) => {
-    io.emit("instructor code run", msg);
+  socket.on(SOCKET_MESSAGE_TYPE.INSTRUCTOR_CODE_RUN, (msg) => {
+    io.emit(SOCKET_MESSAGE_TYPE.INSTRUCTOR_CODE_RUN, msg);
   });
 
   // Forward/push this so the students stop writing.
-  socket.on("end session", (msg) => {
-    io.emit("end session", msg);
+  socket.on(SOCKET_MESSAGE_TYPE.INSTRUCTOR_END_SESSION, (msg) => {
+    io.emit(SOCKET_MESSAGE_TYPE.INSTRUCTOR_END_SESSION, msg);
   });
 });
 

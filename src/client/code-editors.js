@@ -7,6 +7,7 @@ import {
   setInstructorSelection,
 } from "./cm-extensions.js";
 import { GET_JSON_REQUEST, POST_JSON_REQUEST } from "./utils.js";
+import { SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
 
 const FLUSH_CHANGES_FREQ = /*seconds=*/ 3 * 1000;
 
@@ -153,50 +154,40 @@ export class CodeFollowingEditor {
     this.view = new EditorView({ state, parent: node });
     this.active = true;
 
-    socket.on("instructor event", this.handleInstructorEvent.bind(this));
+    socket.on(
+      SOCKET_MESSAGE_TYPE.INSTRUCTOR_EDIT,
+      this.handleInstructorEdit.bind(this)
+    );
+    socket.on(
+      SOCKET_MESSAGE_TYPE.INSTRUCTOR_CURSOR,
+      this.handleInstructorCursorChange.bind(this)
+    );
   }
 
   getDocVersion() {
     return this.docVersion;
   }
 
-  async handleInstructorEvent(msg) {
-    if (!this.active) return;
-    if (!msg.cursor && !msg.changes) {
-      console.warn("Unexpected message: ", msg);
-      return;
-    }
+  handleInstructorCursorChange({ anchor, head }) {
+    if (anchor > this.view.state.doc.length) return;
+    if (head > this.view.state.doc.length) return;
+    this.view.dispatch({
+      effects: setInstructorSelection.of({ anchor, head }),
+    });
+  }
 
-    if (msg.cursor) {
-      let { anchor, head } = msg.cursor;
-      // If out of bounds, we're out of sync and we should ignore this.
-      if (anchor > this.view.state.doc.length) return;
-      if (head > this.view.state.doc.length) return;
-      this.view.dispatch({
-        effects: setInstructorSelection.of({ anchor, head }),
-      });
-      return;
-    }
-
-    // Uncomment out ONLY FOR TESTING!
-    // if (msg.id === 10) {
-    //   console.log("dropping change 10: ", msg.changes);
-    //   return;
-    // }
-
-    let changes = ChangeSet.fromJSON(msg.changes);
-    let { id } = msg;
-
-    // Attempt to catch up on changes!
+  // FIXME: Think about the actual failure modes, given socket io is guaranteed in-order (w/ possible drops).
+  async handleInstructorEdit({ changes, id }) {
+    changes = ChangeSet.fromJSON(changes);
     if (id !== this.docVersion) {
-      this.catchUpOnChanges();
+      // FIXME: think about what else to do here...
+      await this.catchUpOnChanges();
       if (id !== this.docVersion) {
         console.warn(
           `Failed to catch up on changes: at ${this.docVersion} of ${id}`
         );
       }
     }
-
     if (id === this.docVersion) {
       // console.log("Normal dispatch for change: ", id);
       // We're good now!
@@ -235,9 +226,10 @@ export class CodeFollowingEditor {
 }
 
 export class InstructorCodeEditor {
-  constructor(node, socket, doc, startVersion) {
+  constructor({ node, socket, doc, startVersion, sessionNumber }) {
     this.docVersion = startVersion;
     this.socket = socket;
+    this.sessionNumber = sessionNumber;
 
     let state = EditorState.create({
       doc: Text.of(doc),
@@ -272,7 +264,8 @@ export class InstructorCodeEditor {
       viewUpdate.transactions.forEach((tr) => {
         // if (!tr.annotation(Transaction.userEvent)) return;
         // let userEvent = tr.annotation(Transaction.userEvent);
-        this.socket.emit("instructor event", {
+        this.socket.emit(SOCKET_MESSAGE_TYPE.INSTRUCTOR_EDIT, {
+          sessionId: this.sessionNumber,
           id: this.docVersion,
           changes: tr.changes.toJSON(),
           ts: Date.now(),
@@ -286,9 +279,9 @@ export class InstructorCodeEditor {
       viewUpdate.transactions.some((tr) => tr.isUserEvent("select"))
     ) {
       let { anchor, head } = viewUpdate.state.selection.main;
-      this.socket.emit("instructor event", {
-        cursor: { anchor, head },
-        // id: docVersion,
+      this.socket.emit(SOCKET_MESSAGE_TYPE.INSTRUCTOR_CURSOR, {
+        anchor,
+        head,
       });
     }
   }

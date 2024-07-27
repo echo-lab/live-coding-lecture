@@ -4,9 +4,13 @@ import { io } from "socket.io-client";
 import { GET_JSON_REQUEST, getIdentity, POST_JSON_REQUEST } from "./utils.js";
 
 import { PythonCodeRunner } from "./code-runner.js";
-import { Console, initializeRunInteractions, makeConsoleResizable } from "./shared-interactions.js";
+import {
+  Console,
+  initializeRunInteractions,
+  makeConsoleResizable,
+} from "./shared-interactions.js";
 import { InstructorCodeEditor } from "./code-editors.js";
-import { CLIENT_TYPE } from "../shared-constants.js";
+import { CLIENT_TYPE, SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
 
 const codeContainer = document.querySelector("#code-container");
 const startButton = document.querySelector("#start-session-butt");
@@ -15,7 +19,7 @@ const sessionDetails = document.querySelector("#session-details");
 const runButtonEl = document.querySelector("#run-button");
 const outputCodeContainer = document.querySelector("#all-code-outputs");
 const consoleResizer = document.querySelector("#resize-console");
-const codeOutputsContainer = document.querySelector("#output-container")
+const codeOutputsContainer = document.querySelector("#output-container");
 makeConsoleResizable(codeOutputsContainer, consoleResizer);
 
 const socket = io();
@@ -53,12 +57,13 @@ function initialize({ doc = null, docVersion = null, sessionNumber = null }) {
   endButton.disabled = false;
   sessionDetails.textContent = `Session: ${sessionNumber}`;
 
-  let codeEditor = new InstructorCodeEditor(
-    codeContainer,
+  let codeEditor = new InstructorCodeEditor({
+    node: codeContainer,
     socket,
     doc,
-    docVersion
-  );
+    startVersion: docVersion,
+    sessionNumber,
+  });
   let codeRunner = new PythonCodeRunner();
   let consoleOutput = new Console(outputCodeContainer);
 
@@ -69,7 +74,8 @@ function initialize({ doc = null, docVersion = null, sessionNumber = null }) {
     consoleOutput,
     sessionNumber,
     source: CLIENT_TYPE.INSTRUCTOR,
-    broadcastResult: (msg) => socket.emit("instructor code run", msg),
+    broadcastResult: (msg) =>
+      socket.emit(SOCKET_MESSAGE_TYPE.INSTRUCTOR_CODE_RUN, msg),
   });
 
   endButton.addEventListener("click", async () => {
@@ -80,6 +86,6 @@ function initialize({ doc = null, docVersion = null, sessionNumber = null }) {
     const response = await fetch("/end-session", POST_JSON_REQUEST);
     let res = await response.json();
     if (res.error) console.warning("Could not close session!");
-    socket.emit("end session", { sessionNumber });
+    socket.emit(SOCKET_MESSAGE_TYPE.INSTRUCTOR_END_SESSION, { sessionNumber });
   });
 }

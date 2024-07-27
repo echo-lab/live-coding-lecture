@@ -12,7 +12,11 @@ import {
   makeConsoleResizable,
   setUpChangeEmail,
 } from "./shared-interactions.js";
-import { CLIENT_TYPE, USER_ACTIONS } from "../shared-constants.js";
+import {
+  CLIENT_TYPE,
+  SOCKET_MESSAGE_TYPE,
+  USER_ACTIONS,
+} from "../shared-constants.js";
 import { NotesEditor } from "./notes-editor.js";
 
 const FLUSH_CHANGES_FREQ = /*seconds=*/ 3 * 1000;
@@ -134,7 +138,7 @@ async function attemptInitialization() {
     email,
   });
   socket.on(
-    "instructor code run",
+    SOCKET_MESSAGE_TYPE.INSTRUCTOR_CODE_RUN,
     (msg) => sessionActive && consoleOutput.addResult(msg)
   );
 
@@ -150,7 +154,7 @@ async function attemptInitialization() {
   );
 
   // If we're on the playground tab, blink the instructor tab whenever a change happens.
-  socket.on("instructor event", (msg) => {
+  socket.on(SOCKET_MESSAGE_TYPE.INSTRUCTOR_EDIT, (msg) => {
     if (!msg.changes) return;
     if (instructorCodeTab.classList.contains("selected")) return;
     instructorCodeTab.style.animation = "none";
@@ -209,11 +213,12 @@ async function attemptInitialization() {
     FLUSH_CHANGES_FREQ
   );
 
-  socket.on("end session", (msg) => {
+  socket.on(SOCKET_MESSAGE_TYPE.INSTRUCTOR_END_SESSION, (msg) => {
     console.log("SESSION IS ENDED!");
     clearInterval(flushChangesLoop);
     notesEditor.flushChangesToServer();
     notesEditor.endSession();
+    playgroundEditor.endSession();
     instructorEditor.stopFollowing();
     sessionActive = false;
   });
