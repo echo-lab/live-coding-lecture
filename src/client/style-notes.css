@@ -11,92 +11,31 @@
 #student-notes-interface .parent-container {
   display: grid;
   grid-template-columns: [code-start] 49% [gutter-start] 1% [notes-start] 50% [notes-end];
-  /* grid-template-rows: [toolbar-start] 45px [code-start] auto [output-start] 220px [output-end]; */
   grid-template-rows: [toolbar-start] 40px [code-start] auto [output-start] 220px [output-end];
   grid-template-areas:
     "code-tabs gutter notes-display"
     "code-display gutter notes-display"
     "code-output gutter notes-display";
 
-  font-size: large;
-
-  min-height: 500px;
-  height: 90vh;
   min-width: 800px;
-  /* width: 90vw; */
   width: 100%;
 
   /* border-radius: 15px; */
 }
 
 #code-tabs {
-  font-family: "Courier New", monospace;
-  /* font-size: small; */
-  font-size: 1rem;
-  display: grid;
+  /* Optional: just to make sure grid-area names don't become out of sync w/ other UIs */
   grid-area: code-tabs;
-  width: 100%;
-  height: 100%;
-  border: solid 1px lightgrey;
-  border-radius: 5px 15px 0px 0px;
-  /* border-right: solid 7px lightgrey; */
-  /* border-bottom: solid 1px rgb(206, 206, 206); */
-  box-sizing: border-box;
-}
-
-/* #code-tabs .nav-link {
-    color: black;
-} */
-
-#code-tabs-inner {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-content: flex-start;
-}
-
-.code-tab {
-  padding: 5px;
-  border-color: lightgrey;
-  border-width: 1px;
-  border-style: solid;
-  height: 100%;
-  box-sizing: border-box;
-  justify-content: center;
-  background-color: rgb(244, 244, 244);
-  cursor: pointer;
-}
-
-/* #session-info button:first-of-type { */
-
-/* .code-tabs .code-tab:first-of-type { */
-#instructor-code-tab {
-  /* margin-left: 5px; */
-  border-radius: 5px 0px 0px 0px;
-}
-
-.code-tab.selected {
-  background-color: white;
-  border-top-color: blue;
-  border-top-width: 2px;
 }
 
 #student-notes-interface .code-container {
-  display: grid;
+  /* Optional: just to make sure grid-area names don't become out of sync w/ other UIs */
   grid-area: code-display;
-  overflow-y: auto;
-  border: solid 1px lightgrey;
-  position: relative;
 }
 
 #student-notes-interface #output-container {
-  display: grid;
+  /* Optional: just to make sure grid-area names don't become out of sync w/ other UIs */
   grid-area: code-output;
-  /* border-right: solid 1px lightgrey; */
-  overflow-y: auto;
-  /* border-top: solid 1px lightgrey; */
-  border: solid 1px lightgrey;
-  border-radius: 0px 0px 15px 15px;
 }
 
 #notes-container {

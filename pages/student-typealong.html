@@ -8,14 +8,11 @@
   </head>
   <body class="code-typing-interface">
     <div id="app">
-      <!-- <h2>Type-Along Code Notes</h2> -->
       <div class="topbar">
-        <!-- <div id="run-button-holder"> -->
         <div class="topbar-left">
           <h2>Type-Along Code Notes</h2>
         </div>
         <button id="run-button" class="run-button-grid">▶ ️Run</button>
-        <!-- </div> -->
         <div class="topbar-right">
           <span>
             <span id="student-email"></span>
@@ -24,12 +21,16 @@
         </div>
       </div>
       <div class="parent-container">
+        <div id="code-tabs">
+          <div id="code-tabs-inner">
+            <div class="code-tab selected" id="instructor-code-tab">
+              <div class="code-tab-text">notes.py</div>
+            </div>
+          </div>
+        </div>
         <div id="code-container" class="code-container"></div>
-      </div>
-      <div id="output-container">
-        <span style="margin-bottom:0px">Output</span>
-        <hr>
-        <div id="all-code-outputs">
+        <div id="output-container">
+          <div id="all-code-outputs"></div>
         </div>
       </div>
     </div>

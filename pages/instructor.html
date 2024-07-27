@@ -2,16 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Live Coding Lecture</title>
   </head>
   <body class="code-typing-interface">
     <div id="app">
-      <!-- <h2>Instructor Interface</h2> -->
       <div class="topbar">
         <div class="topbar-left">
-          <h2>Instructor's Code</h2>
+          <!-- <h2>Instructor's Code</h2> -->
         </div>
         <button id="run-button" class="run-button-grid">▶ ️Run</button>
         <div class="topbar-right">
@@ -23,15 +22,17 @@
         </div>
       </div>
       <div class="parent-container">
+        <div id="code-tabs">
+          <div id="code-tabs-inner">
+            <div class="code-tab selected" id="instructor-code-tab">
+              <div class="code-tab-text">instructor.py</div>
+            </div>
+          </div>
+        </div>
         <div id="code-container" class="code-container"></div>
-      </div>
-      <div id="output-container">
-        <span style="margin-bottom:0px">Output</span>
-        <hr>
-        <div id="all-code-outputs"></div>
-        <!-- <div id="code-output-text"> -->
-          <!-- <div class="stdout-line"><pre> > One line of std out</pre></div> -->
-        <!-- </div> -->
+        <div id="output-container">
+          <div id="all-code-outputs"></div>
+        </div>
       </div>
     </div>
     <script type="module" src="/src/client/instructor.js"></script>
