@@ -56,9 +56,9 @@ export class LectureSession extends Model {
       },
       order: ["change_number"],
     });
-    return changes.map((change) => ({
-      change: JSON.parse(change.val),
-      changeNumber: change.change_number,
+    return changes.map(({change, change_number}) => ({
+      change: JSON.parse(change),
+      changeNumber: change_number,
     }));
   }
 

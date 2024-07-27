@@ -84,8 +84,6 @@ app.get("/instructor-changes/:docversion", async (req, res) => {
   if (!sesh) {
     res.json({ error: "no session" });
   }
-  // NOTE: this crashed here once?????!!!!!
-  // let changes = await sesh.changesSinceVersion(docVersion);
   let changes = sesh && (await sesh.changesSinceVersion(docVersion));
 
   res.json({ changes });
