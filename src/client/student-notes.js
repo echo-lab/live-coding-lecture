@@ -22,6 +22,7 @@ const instructorCodeTab = document.querySelector("#instructor-code-tab");
 const playgroundCodeTab = document.querySelector("#playground-code-tab");
 const runButtonEl = document.querySelector("#run-button");
 const codeOutputsEl = document.querySelector("#all-code-outputs");
+const consoleResizer = document.querySelector("#resize-console");
 let instructorTabActive = true;
 
 const NOTES_CONTAINER_ID = "#notes-document";
@@ -122,7 +123,7 @@ async function attemptInitialization() {
 
   // Set up the run button for the playground tab.
   let codeRunner = new PythonCodeRunner();
-  let consoleOutput = new Console(codeOutputsEl);
+  let consoleOutput = new Console(codeOutputsEl, consoleResizer, true);
   initializeRunInteractions({
     runButtonEl,
     codeEditor: playgroundEditor,

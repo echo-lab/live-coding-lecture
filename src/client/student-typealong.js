@@ -13,6 +13,7 @@ const studentDetailsContainer = document.querySelector("#student-email");
 const changeEmailLink = document.querySelector("#change-email");
 const runButtonEl = document.querySelector("#run-button");
 const outputCodeContainer = document.querySelector("#all-code-outputs");
+const consoleResizer = document.querySelector("#resize-console");
 
 const socket = io();
 
@@ -58,7 +59,7 @@ async function attemptInitialization() {
   });
 
   let codeRunner = new PythonCodeRunner();
-  let consoleOutput = new Console(outputCodeContainer);
+  let consoleOutput = new Console(outputCodeContainer, consoleResizer);
 
   initializeRunInteractions({
     runButtonEl,

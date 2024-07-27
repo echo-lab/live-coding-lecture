@@ -11,16 +11,18 @@
 #student-notes-interface .parent-container {
   display: grid;
   grid-template-columns: [code-start] 49% [gutter-start] 1% [notes-start] 50% [notes-end];
-  grid-template-rows: [toolbar-start] 40px [code-start] auto [output-start] 220px [output-end];
+  /* grid-template-rows: [toolbar] 40px [code] auto [console] min-content [end-row]; */
+  grid-template-rows: [toolbar] 40px [code] auto [resizer] 6px [console] 200px;
   grid-template-areas:
     "code-tabs gutter notes-display"
     "code-display gutter notes-display"
+    "resizer gutter notes-display"
     "code-output gutter notes-display";
 
   min-width: 800px;
   width: 100%;
-
-  /* border-radius: 15px; */
+  height: 90vh;
+  position: relative;
 }
 
 #code-tabs {

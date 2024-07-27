@@ -5,7 +5,7 @@ const MAX_OUTPUT_LENGTH = 50;
 
 const FILE_NAME = {
   [CLIENT_TYPE.INSTRUCTOR]: "instructor.py",
-  [CLIENT_TYPE.TYPEALONG]: "my_notes.py",
+  [CLIENT_TYPE.TYPEALONG]: "notes.py",
   [CLIENT_TYPE.NOTES]: "playground.py",
 };
 
@@ -57,9 +57,46 @@ export function initializeRunInteractions({
   });
 }
 
+const MAX_HEIGHT = 400;
+const MIN_HEIGHT = 65;
+function makeConsoleResizable(outputConsole, resizeBar, twoColWorkaround) {
+  let isDragging = false;
+  let consoleBottom = 0;
+  resizeBar.addEventListener("mousedown", () => {
+    isDragging = true;
+    let {bottom} = outputConsole.getBoundingClientRect();
+    consoleBottom = bottom + window.scrollY;
+    resizeBar.classList.add("is-dragging");
+  });
+  document.addEventListener("mousemove", (ev) => {
+    if (!isDragging) return;
+    let y = ev.pageY;
+    let height = consoleBottom - y - 4; // 4 for the resizer's height
+    height = Math.min(MAX_HEIGHT, height);
+    height = Math.max(height, MIN_HEIGHT);
+    if (!twoColWorkaround) {
+      outputConsole.style.height = `${height}px`;
+    } else {
+      outputConsole.style.height = "100%";
+      outputConsole.parentElement.style.gridTemplateRows = `40px auto 6px ${height}px`;
+    }
+  });
+  document.addEventListener("mouseup", (ev) => {
+    isDragging = false;
+    resizeBar.classList.remove("is-dragging");
+  });
+}
+
 export class Console {
-  constructor(consoleContainer) {
-    this.el = consoleContainer;
+  constructor(innerContainer, consoleResizer, twoColWorkaround) {
+    this.el = innerContainer;
+
+    consoleResizer &&
+      makeConsoleResizable(
+        innerContainer.parentElement,
+        consoleResizer,
+        twoColWorkaround
+      );
   }
 
   addResult({
@@ -70,6 +107,11 @@ export class Console {
     fileName = "instructor.py",
     ts = Date.now(),
   }) {
+    if (this.el.classList.contains("empty")) {
+      this.el.innerText = "";
+      this.el.classList.remove("empty");
+    }
+
     if (stdout.length > MAX_OUTPUT_LENGTH) {
       stdout = [
         `[ ${stdout.length - MAX_OUTPUT_LENGTH} lines hidden ]`,

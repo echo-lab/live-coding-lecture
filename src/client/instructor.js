@@ -14,14 +14,11 @@ const endButton = document.querySelector("#end-session-butt");
 const sessionDetails = document.querySelector("#session-details");
 const runButtonEl = document.querySelector("#run-button");
 const outputCodeContainer = document.querySelector("#all-code-outputs");
+const consoleResizer = document.querySelector("#resize-console");
 
 const socket = io();
 let uid = getIdentity();
 // Change ID X gets you to doc version X+1
-
-////////////////////////
-// Code Mirror Editor //
-////////////////////////
 
 ///////////////////////////////
 // Initialize w/ the Server
@@ -61,7 +58,7 @@ function initialize({ doc = null, docVersion = null, sessionNumber = null }) {
     docVersion
   );
   let codeRunner = new PythonCodeRunner();
-  let consoleOutput = new Console(outputCodeContainer);
+  let consoleOutput = new Console(outputCodeContainer, consoleResizer);
 
   initializeRunInteractions({
     runButtonEl,

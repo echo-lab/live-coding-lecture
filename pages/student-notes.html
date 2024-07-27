@@ -43,8 +43,11 @@
         >
           <button id="run-button">▶ ️Run</button>
         </div>
+        <div id="resize-console"><div class="resize-symbol"></div></div>
         <div id="output-container">
-          <div id="all-code-outputs"></div>
+          <div id="all-code-outputs" class="empty">
+            Code output will appear here...
+          </div>
         </div>
         <div id="notes-container" class="notes-container">
           <div id="notes-document"></div>
@@ -54,7 +57,8 @@
     <!-- Template for code snippets... -->
     <template id="snapshot-template">
       <div class="code-snapshot-header">
-        <div class="collapse-button">﹀</div><span class="file-info">instructor.py (03:21:42)</span>
+        <div class="collapse-button">﹀</div>
+        <span class="file-info">instructor.py (03:21:42)</span>
         <button class="try-it-out">Open in Playground</button>
       </div>
       <div class="code-snippet-container uneditable"></div>

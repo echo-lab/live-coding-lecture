@@ -93,16 +93,49 @@ h2 {
 .parent-container {
   display: grid;
   grid-template-columns: 100%;
-  grid-template-rows: [toolbar-start] 40px [code-start] auto [output-start] 220px [output-end];
+  grid-template-rows: [toolbar] 40px [code] auto [resizer] 6px [console] min-content;
   grid-template-areas:
     "code-tabs"
     "code-display"
+    "resizer"
     "code-output";
 
   font-size: large;
 
   min-height: 500px;
   height: 90vh;
+}
+
+#resize-console {
+  display: grid;
+  grid-area: resizer;
+  background-color: rgb(236, 236, 236);
+  border-style: solid;
+  border-width: 0px 1px 0px 1px;
+  border-color: lightgrey;
+  cursor: row-resize;
+  justify-content: center;
+}
+
+.resize-symbol {
+  width: 40px;
+  border: solid 1px grey;
+  border-bottom: 0px;
+  height: 0px;
+  margin: auto;
+}
+
+#resize-console:hover > .resize-symbol {
+  border: solid 1px blue;
+}
+
+#resize-console:hover {
+  background-color: rgb(214, 212, 226);
+}
+
+#resize-console.is-dragging {
+  background-color: rgb(192, 189, 206);
+  /* background-color: #f1faff */
 }
 
 #code-tabs {
@@ -160,6 +193,7 @@ h2 {
   overflow-y: auto;
   border: solid 1px lightgrey;
   border-radius: 0px 0px 15px 15px;
+  height: 200px;
 }
 
 @keyframes flash-in {
@@ -185,6 +219,10 @@ h2 {
   overflow-y: auto;
   scroll-behavior: smooth;
   padding: 1rem;
+}
+
+#all-code-outputs.empty {
+  color: grey;
 }
 
 pre {
