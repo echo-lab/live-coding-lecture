@@ -5,7 +5,7 @@ import { getEmail, clearEmail, POST_JSON_REQUEST } from "./utils.js";
 
 import { StudentCodeEditor } from "./code-editors.js";
 import { PythonCodeRunner } from "./code-runner.js";
-import { Console, initializeRunInteractions } from "./shared-interactions.js";
+import { Console, initializeRunInteractions, makeConsoleResizable } from "./shared-interactions.js";
 import { CLIENT_TYPE } from "../shared-constants.js";
 
 const codeContainer = document.querySelector("#code-container");
@@ -14,6 +14,8 @@ const changeEmailLink = document.querySelector("#change-email");
 const runButtonEl = document.querySelector("#run-button");
 const outputCodeContainer = document.querySelector("#all-code-outputs");
 const consoleResizer = document.querySelector("#resize-console");
+const codeOutputsContainer = document.querySelector("#output-container")
+makeConsoleResizable(codeOutputsContainer, consoleResizer);
 
 const socket = io();
 
@@ -59,7 +61,7 @@ async function attemptInitialization() {
   });
 
   let codeRunner = new PythonCodeRunner();
-  let consoleOutput = new Console(outputCodeContainer, consoleResizer);
+  let consoleOutput = new Console(outputCodeContainer);
 
   initializeRunInteractions({
     runButtonEl,

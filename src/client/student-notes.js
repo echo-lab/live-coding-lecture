@@ -6,7 +6,11 @@ import { getEmail, POST_JSON_REQUEST } from "./utils.js";
 import { io } from "socket.io-client";
 import { CodeFollowingEditor, StudentCodeEditor } from "./code-editors.js";
 import { PythonCodeRunner } from "./code-runner.js";
-import { Console, initializeRunInteractions } from "./shared-interactions.js";
+import {
+  Console,
+  initializeRunInteractions,
+  makeConsoleResizable,
+} from "./shared-interactions.js";
 import { CLIENT_TYPE, USER_ACTIONS } from "../shared-constants.js";
 import { NotesEditor } from "./notes-editor.js";
 
@@ -22,7 +26,9 @@ const instructorCodeTab = document.querySelector("#instructor-code-tab");
 const playgroundCodeTab = document.querySelector("#playground-code-tab");
 const runButtonEl = document.querySelector("#run-button");
 const codeOutputsEl = document.querySelector("#all-code-outputs");
+const codeOutputsContainer = document.querySelector("#output-container");
 const consoleResizer = document.querySelector("#resize-console");
+makeConsoleResizable(codeOutputsContainer, consoleResizer, true);
 let instructorTabActive = true;
 
 const NOTES_CONTAINER_ID = "#notes-document";
@@ -123,7 +129,7 @@ async function attemptInitialization() {
 
   // Set up the run button for the playground tab.
   let codeRunner = new PythonCodeRunner();
-  let consoleOutput = new Console(codeOutputsEl, consoleResizer, true);
+  let consoleOutput = new Console(codeOutputsEl);
   initializeRunInteractions({
     runButtonEl,
     codeEditor: playgroundEditor,

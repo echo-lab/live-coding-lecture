@@ -59,12 +59,16 @@ export function initializeRunInteractions({
 
 const MAX_HEIGHT = 400;
 const MIN_HEIGHT = 65;
-function makeConsoleResizable(outputConsole, resizeBar, twoColWorkaround) {
+export function makeConsoleResizable(
+  outputConsole,
+  resizeBar,
+  twoColWorkaround
+) {
   let isDragging = false;
   let consoleBottom = 0;
   resizeBar.addEventListener("mousedown", () => {
     isDragging = true;
-    let {bottom} = outputConsole.getBoundingClientRect();
+    let { bottom } = outputConsole.getBoundingClientRect();
     consoleBottom = bottom + window.scrollY;
     resizeBar.classList.add("is-dragging");
   });
@@ -88,15 +92,8 @@ function makeConsoleResizable(outputConsole, resizeBar, twoColWorkaround) {
 }
 
 export class Console {
-  constructor(innerContainer, consoleResizer, twoColWorkaround) {
+  constructor(innerContainer) {
     this.el = innerContainer;
-
-    consoleResizer &&
-      makeConsoleResizable(
-        innerContainer.parentElement,
-        consoleResizer,
-        twoColWorkaround
-      );
   }
 
   addResult({

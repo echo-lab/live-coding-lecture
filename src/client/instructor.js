@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 import { GET_JSON_REQUEST, getIdentity, POST_JSON_REQUEST } from "./utils.js";
 
 import { PythonCodeRunner } from "./code-runner.js";
-import { Console, initializeRunInteractions } from "./shared-interactions.js";
+import { Console, initializeRunInteractions, makeConsoleResizable } from "./shared-interactions.js";
 import { InstructorCodeEditor } from "./code-editors.js";
 import { CLIENT_TYPE } from "../shared-constants.js";
 
@@ -15,6 +15,8 @@ const sessionDetails = document.querySelector("#session-details");
 const runButtonEl = document.querySelector("#run-button");
 const outputCodeContainer = document.querySelector("#all-code-outputs");
 const consoleResizer = document.querySelector("#resize-console");
+const codeOutputsContainer = document.querySelector("#output-container")
+makeConsoleResizable(codeOutputsContainer, consoleResizer);
 
 const socket = io();
 let uid = getIdentity();
@@ -58,7 +60,7 @@ function initialize({ doc = null, docVersion = null, sessionNumber = null }) {
     docVersion
   );
   let codeRunner = new PythonCodeRunner();
-  let consoleOutput = new Console(outputCodeContainer, consoleResizer);
+  let consoleOutput = new Console(outputCodeContainer);
 
   initializeRunInteractions({
     runButtonEl,
