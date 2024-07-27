@@ -1,5 +1,5 @@
 import { CLIENT_TYPE, USER_ACTIONS } from "../shared-constants";
-import { POST_JSON_REQUEST } from "./utils";
+import { clearEmail, POST_JSON_REQUEST } from "./utils";
 
 const MAX_OUTPUT_LENGTH = 50;
 
@@ -142,4 +142,15 @@ export class Console {
     this.el.appendChild(container);
     this.el.scrollTo(0, 1e6);
   }
+}
+
+export function setUpChangeEmail(el) {
+  const emailMessage =
+    "Are you sure you want to change your email? Progress will be lost";
+  el.hidden = false;
+  el.addEventListener("click", () => {
+    if (!confirm(emailMessage)) return;
+    clearEmail();
+    window.location.reload();
+  });
 }

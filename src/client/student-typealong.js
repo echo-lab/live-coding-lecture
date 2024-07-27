@@ -5,7 +5,7 @@ import { getEmail, clearEmail, POST_JSON_REQUEST } from "./utils.js";
 
 import { StudentCodeEditor } from "./code-editors.js";
 import { PythonCodeRunner } from "./code-runner.js";
-import { Console, initializeRunInteractions, makeConsoleResizable } from "./shared-interactions.js";
+import { Console, initializeRunInteractions, makeConsoleResizable, setUpChangeEmail } from "./shared-interactions.js";
 import { CLIENT_TYPE } from "../shared-constants.js";
 
 const codeContainer = document.querySelector("#code-container");
@@ -21,14 +21,7 @@ const socket = io();
 
 const email = getEmail();
 studentDetailsContainer.textContent = `Your email: ${email}`;
-const emailMessage =
-  "Are you sure you want to change your email? Progress will be lost";
-changeEmailLink.hidden = false;
-changeEmailLink.addEventListener("click", () => {
-  if (!confirm(emailMessage)) return;
-  clearEmail();
-  window.location.reload();
-});
+setUpChangeEmail(changeEmailLink);
 
 ///////////////////////////
 // Join/await a session! //

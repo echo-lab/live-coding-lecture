@@ -10,6 +10,7 @@ import {
   Console,
   initializeRunInteractions,
   makeConsoleResizable,
+  setUpChangeEmail,
 } from "./shared-interactions.js";
 import { CLIENT_TYPE, USER_ACTIONS } from "../shared-constants.js";
 import { NotesEditor } from "./notes-editor.js";
@@ -39,14 +40,7 @@ const email = getEmail();
 const studentDetailsContainer = document.querySelector("#student-email");
 const changeEmailLink = document.querySelector("#change-email");
 studentDetailsContainer.textContent = `Your email: ${email}`;
-const emailMessage =
-  "Are you sure you want to change your email? Progress will be lost";
-changeEmailLink.hidden = false;
-changeEmailLink.addEventListener("click", () => {
-  if (!confirm(emailMessage)) return;
-  clearEmail();
-  window.location.reload();
-});
+setUpChangeEmail(changeEmailLink);
 
 ////////
 // NOTE: this needs to be global! Or at least, the catchUpOnChanges function needs to be aware of the real
