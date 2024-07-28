@@ -1,15 +1,11 @@
 import { basicSetup, EditorView } from "codemirror";
-import {
-  EditorState,
-  StateEffect,
-  StateField,
-  Facet,
-} from "@codemirror/state";
+import { EditorState, StateEffect, StateField, Facet } from "@codemirror/state";
 import { python } from "@codemirror/lang-python";
 
 import { showTooltip, Decoration, WidgetType } from "@codemirror/view";
 
 const CONTEXT_LINES = 1; // How many lines above/below the selected code to capture
+const MAX_DOC_LENGTH = 100000;
 
 function makeID() {
   return crypto.randomUUID();
@@ -218,7 +214,6 @@ const instructorCursorWidget = Decoration.widget({
   widget: new CursorWidget(),
 });
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Export related extensions in groups
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,8 +228,12 @@ export const followInstructorExtensions = [
   instructorCursorField,
 ];
 
-export let codeSnapshotFields = (onNewSnapshot) => ([
+export let codeSnapshotFields = (onNewSnapshot) => [
   handleNewCodeAnchor.of(onNewSnapshot),
   codeAnchorTooltipField,
   codeAnchorTooltipBaseTheme,
-]);
+];
+
+export const capLength = [
+  EditorState.changeFilter.of((tr) => tr.newDoc.length < MAX_DOC_LENGTH),
+];

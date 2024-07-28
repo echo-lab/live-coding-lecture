@@ -2,6 +2,7 @@ import { EditorView } from "codemirror";
 import { EditorState, Text, ChangeSet } from "@codemirror/state";
 import {
   basicExtensions,
+  capLength,
   codeSnapshotFields,
   followInstructorExtensions,
   setInstructorSelection,
@@ -53,6 +54,7 @@ export class StudentCodeEditor {
         ...basicExtensions,
         EditorView.updateListener.of(this.onCodeUpdate.bind(this)),
         snapshotExtensions,
+        capLength,
       ],
     });
 
@@ -149,6 +151,7 @@ export class CodeFollowingEditor {
         ...codeSnapshotFields(onNewSnapshot),
         ...followInstructorExtensions,
         EditorView.editable.of(false),
+        capLength,
       ],
     });
     this.view = new EditorView({ state, parent: node });
@@ -238,6 +241,7 @@ export class InstructorCodeEditor {
         EditorView.updateListener.of(
           this.broadcastInstructorChanges.bind(this)
         ),
+        capLength,
       ],
     });
 
