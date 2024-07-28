@@ -3,7 +3,7 @@ export const GET_JSON_REQUEST = { method: "GET", headers: JSON_HEADERS };
 export const POST_JSON_REQUEST = { method: "POST", headers: JSON_HEADERS };
 
 export function makeID() {
-  return crypto.randomUUID();
+  return Date.now();
 }
 
 export function getEmail() {
@@ -16,14 +16,6 @@ export function getEmail() {
 
 export function clearEmail() {
   localStorage.removeItem("user_email");
-}
-
-export function getIdentity() {
-  let uid = localStorage.getItem("user_id");
-  if (uid) return uid;
-  uid = makeID();
-  localStorage.setItem("user_id", uid);
-  return uid;
 }
 
 export const EXAMPLE_CODE = `# Here is some example code

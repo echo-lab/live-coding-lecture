@@ -1,7 +1,7 @@
 import "./style.css";
 
 import { io } from "socket.io-client";
-import { GET_JSON_REQUEST, getIdentity, POST_JSON_REQUEST } from "./utils.js";
+import { GET_JSON_REQUEST, POST_JSON_REQUEST } from "./utils.js";
 
 import { PythonCodeRunner } from "./code-runner.js";
 import {
@@ -23,7 +23,6 @@ const codeOutputsContainer = document.querySelector("#output-container");
 makeConsoleResizable(codeOutputsContainer, consoleResizer);
 
 const socket = io();
-let uid = getIdentity();
 // Change ID X gets you to doc version X+1
 
 ///////////////////////////////

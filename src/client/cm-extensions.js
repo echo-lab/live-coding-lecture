@@ -7,8 +7,9 @@ import { showTooltip, Decoration, WidgetType } from "@codemirror/view";
 const CONTEXT_LINES = 1; // How many lines above/below the selected code to capture
 const MAX_DOC_LENGTH = 100000;
 
+// Note: we can probably get rid of this later...
 function makeID() {
-  return crypto.randomUUID();
+  return Date.now();
 }
 
 // Given an Editor state, get the current selection as well as the surrounding context.
