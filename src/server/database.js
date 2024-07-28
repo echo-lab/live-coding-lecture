@@ -3,8 +3,6 @@ import { Text, ChangeSet } from "@codemirror/state";
 
 const sequelize = new Sequelize("sqlite::memory:"); // Example for sqlite
 
-// TODO: add user actions... lol.
-// Question: Can we just chuck them in one big table? Eh. Probs not worth it.
 /*
 LectureSession
   InstructorChange
@@ -56,47 +54,24 @@ export class LectureSession extends Model {
       },
       order: ["change_number"],
     });
-    return changes.map(({change, change_number}) => ({
+    return changes.map(({ change, change_number }) => ({
       change: JSON.parse(change),
       changeNumber: change_number,
     }));
   }
 
   async getDoc() {
-    if (this.doc) {
-      return { doc: this.doc, docVersion: this.docVersion };
-    }
-
     let changes = await this.getInstructorChanges({
       attributes: ["change", "change_number"],
       order: ["change_number"],
     });
-    let { doc, docVersion } = reconstructCMDoc(changes);
-    this.doc = doc;
-    this.docVersion = docVersion;
-    return { doc, docVersion };
-  }
-
-  async addOneInstructorChange({ id, changes, ts }) {
-    let { doc, docVersion } = await this.getDoc();
-    if (id !== docVersion) {
-      console.log(`UH OH: id=${id}, docVersion=${docVersion}`);
-      // TODO: throw an error...
-      return;
-    }
-    this.doc = ChangeSet.fromJSON(changes).apply(doc);
-    this.docVersion++;
-    // console.log("updated doc: ", await this.getDoc());
-    await this.createInstructorChange({
-      change_number: id,
-      change: JSON.stringify(changes),
-      change_ts: ts,
-    });
+    return reconstructCMDoc(changes);
   }
 }
 
 LectureSession.init(
   {
+    // Id is probably added automatically?
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,

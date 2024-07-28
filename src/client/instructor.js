@@ -37,8 +37,6 @@ async function getOrCreateSession(createIfNoSesh) {
   return res.sessionNumber;
 }
 
-// let x = await getOrCreateSession(false);
-// console.log("x is: ", x);
 if (!(await getOrCreateSession(false))) {
   // No current session
   startButton.disabled = false;
@@ -83,9 +81,15 @@ function initialize({ doc = null, docVersion = null, sessionNumber = null }) {
     endButton.disabled = true;
     sessionDetails.textContent += " (Terminated)";
     codeEditor.endSession();
-    const response = await fetch("/end-session", POST_JSON_REQUEST);
-    let res = await response.json();
-    if (res.error) console.warning("Could not close session!");
     socket.emit(SOCKET_MESSAGE_TYPE.INSTRUCTOR_END_SESSION, { sessionNumber });
   });
+
+  socket.on(
+    SOCKET_MESSAGE_TYPE.INSTRUCTOR_OUT_OF_SYNC,
+    ({ sessionId: problemSesh, error }) => {
+      if (parseInt(problemSesh) === sessionNumber) {
+        alert(`Please restart: out of sync w/ server (${error})`);
+      }
+    }
+  );
 }

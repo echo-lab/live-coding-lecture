@@ -4,74 +4,41 @@ import * as http from "http";
 import { Server } from "socket.io";
 import { LectureSession } from "./database.js";
 import { CLIENT_TYPE, SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
+import { ChangeBuffer } from "./change-buffer.js";
 
 const app = express();
-
 app.use(express.json());
 
-// This only works because we're running the server on one machine lol
-// Yay, premature optimization!
-class SessionCache {
-  constructor() {
-    this.session = false; // false means we don't know; null means we don't have one. (shrug)
-  }
+let instructorChangeBuffer = new ChangeBuffer(5000);
 
-  // Returns the current session or null
-  async getCurrentSession() {
-    if (this.session !== false) return this.session;
-    let sesh = await LectureSession.findAll({ where: { isFinished: false } });
-    this.session = sesh.length === 0 ? null : sesh[0];
-    return this.session;
-  }
-
-  async createLectureSession() {
-    if (await this.getCurrentSession()) {
-      // console.log("Already have a session: ", this.getCurrentSession())
-      console.warning("Shouldn't create a session if we already have one!");
-      // Should probably close it...
-    }
-    this.session = await LectureSession.create();
-    return this.session;
-  }
-
-  async closeSession() {
-    if (await this.getCurrentSession()) {
-      await this.session.update({ isFinished: true });
-      this.session = null;
-      return true;
-    } else {
-      return false;
-    }
-  }
+async function getCurrentLecture() {
+  let sesh = await LectureSession.findAll({
+    where: { isFinished: false },
+    order: [["id", "DESC"]],
+  });
+  // TODO: Probably try to make sure there's not more than one session lol.
+  return sesh.length > 0 ? sesh[0] : null;
 }
-let cacher = new SessionCache();
 
 // Get or create the current session
 app.post("/current-session", async (req, res) => {
-  let sesh =
-    (await cacher.getCurrentSession()) || (await cacher.createLectureSession());
+  let sesh = (await getCurrentLecture()) || (await LectureSession.create());
   console.log("Session ID: ", sesh.id);
 
+  await instructorChangeBuffer.flush(); // In case there are any pending, even if they're erroneous lol.
   let { doc, docVersion } = await sesh.getDoc();
   res.json({ doc: doc.toJSON(), docVersion, sessionNumber: sesh.id });
 });
 
 app.get("/current-session", async (req, res) => {
-  let sesh = await cacher.getCurrentSession();
-  if (sesh) {
-    let { doc, docVersion } = sesh;
-    res.json({ doc: doc.toJSON(), docVersion, sessionNumber: sesh.id });
-  } else {
+  let sesh = await getCurrentLecture();
+  if (!sesh) {
     res.json({ doc: null, docVersion: null });
+    return;
   }
-});
-
-app.post("/end-session", async (req, res) => {
-  if (await cacher.closeSession()) {
-    res.json({});
-  } else {
-    res.json({ error: "No open session" });
-  }
+  await instructorChangeBuffer.flush();
+  let { doc, docVersion } = await sesh.getDoc();
+  res.json({ doc: doc.toJSON(), docVersion, sessionNumber: sesh.id });
 });
 
 app.get("/instructor-changes/:docversion", async (req, res) => {
@@ -80,7 +47,7 @@ app.get("/instructor-changes/:docversion", async (req, res) => {
     res.json({ error: `invalid doc version: ${req.params.docversion}` });
     return;
   }
-  let sesh = await cacher.getCurrentSession();
+  let sesh = await getCurrentLecture();
   if (!sesh) {
     res.json({ error: "no session" });
   }
@@ -102,7 +69,7 @@ app.post("/current-session-notes", async (req, res) => {
     return;
   }
 
-  let lecture = await cacher.getCurrentSession();
+  let lecture = await getCurrentLecture();
   if (!lecture) {
     res.json({ error: "no lecture" });
     return;
@@ -122,13 +89,16 @@ app.post("/current-session-notes", async (req, res) => {
 
   // Get the current code-mirror doc and version from the playground code editor.
   let { doc, docVersion } = await sesh.currentPlaygroundCode();
+  await instructorChangeBuffer.flush();
+  let { doc: lectureDoc, docVersion: lectureDocVersion } =
+    await lecture.getDoc();
 
   res.json({
     playgroundCodeInfo: { doc, docVersion },
     notesDocChanges,
     sessionNumber: lecture.id,
-    lectureDoc: lecture.doc,
-    lectureDocVersion: lecture.docVersion,
+    lectureDoc,
+    lectureDocVersion,
   });
 });
 
@@ -165,7 +135,7 @@ app.post("/current-session-typealong", async (req, res) => {
     return;
   }
 
-  let lecture = await cacher.getCurrentSession();
+  let lecture = await getCurrentLecture();
   if (!lecture) {
     res.json({ error: "no session" });
     return;
@@ -267,6 +237,8 @@ const server = http.createServer(app).listen(3000, () => {
 });
 
 const io = new Server(server);
+instructorChangeBuffer.initSocket(io);
+
 // io.listen(3000);
 io.on("connection", async (socket) => {
   console.log("a user connected");
@@ -280,11 +252,7 @@ io.on("connection", async (socket) => {
     io.emit(SOCKET_MESSAGE_TYPE.INSTRUCTOR_EDIT, msg);
     // FIXME: these might not get executed in order!
 
-    if (msg.changes) {
-      console.log(`Change: ${msg.id}`);
-      let sesh = await cacher.getCurrentSession();
-      sesh && (await sesh.addOneInstructorChange(msg));
-    }
+    instructorChangeBuffer.enqueue(msg);
   });
 
   // Forward info about code runs.
@@ -293,8 +261,12 @@ io.on("connection", async (socket) => {
   });
 
   // Forward/push this so the students stop writing.
-  socket.on(SOCKET_MESSAGE_TYPE.INSTRUCTOR_END_SESSION, (msg) => {
+  socket.on(SOCKET_MESSAGE_TYPE.INSTRUCTOR_END_SESSION, async (msg) => {
+    // Forward immediately
     io.emit(SOCKET_MESSAGE_TYPE.INSTRUCTOR_END_SESSION, msg);
+
+    let lecture = await LectureSession.findByPk(msg.sessionNumber);
+    lecture && (await lecture.update({ isFinished: true }));
   });
 });
 
