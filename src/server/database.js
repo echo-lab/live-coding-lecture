@@ -2,6 +2,7 @@ import { Sequelize, DataTypes, Model, Op } from "sequelize";
 import { Text, ChangeSet } from "@codemirror/state";
 
 const sequelize = new Sequelize("sqlite::memory:"); // Example for sqlite
+export const db = sequelize;
 
 /*
 LectureSession
@@ -44,36 +45,45 @@ function reconstructCMDoc(changes) {
 
 // NOTE: this class is written for a SINGLE THREADED SERVER!!! Consider rewriting :)
 export class LectureSession extends Model {
-  static async current() {
-    let sesh = await LectureSession.findAll({
-      where: { isFinished: false },
-      order: [["id", "DESC"]],
-    });
+  static async current(transaction) {
+    let sesh = await LectureSession.findAll(
+      {
+        where: { isFinished: false },
+        order: [["id", "DESC"]],
+      },
+      { transaction }
+    );
     // TODO: Probably try to make sure there's not more than one session lol.
     return sesh.length > 0 ? sesh[0] : null;
   }
 
-  async changesSinceVersion(docVersion) {
+  async changesSinceVersion(docVersion, transaction) {
     // Compose all the changes; return the resulting change and the latest version number
-    let changes = await this.getInstructorChanges({
-      where: {
-        change_number: {
-          [Op.gte]: docVersion,
+    let changes = await this.getInstructorChanges(
+      {
+        where: {
+          change_number: {
+            [Op.gte]: docVersion,
+          },
         },
+        order: ["change_number"],
       },
-      order: ["change_number"],
-    });
+      { transaction }
+    );
     return changes.map(({ change, change_number }) => ({
       change: JSON.parse(change),
       changeNumber: change_number,
     }));
   }
 
-  async getDoc() {
-    let changes = await this.getInstructorChanges({
-      attributes: ["change", "change_number"],
-      order: ["change_number"],
-    });
+  async getDoc(transaction) {
+    let changes = await this.getInstructorChanges(
+      {
+        attributes: ["change", "change_number"],
+        order: ["change_number"],
+      },
+      { transaction }
+    );
     return reconstructCMDoc(changes);
   }
 }
@@ -108,26 +118,37 @@ InstructorAction.belongsTo(LectureSession);
 
 export class TypealongSession extends Model {
   // SLOW-ish
-  async getCurrentDoc() {
-    let changes = await this.getTypealongChanges({
-      attributes: ["change", "change_number"],
-      order: ["change_number"],
-    });
+  async getCurrentDoc(transaction) {
+    let changes = await this.getTypealongChanges(
+      {
+        attributes: ["change", "change_number"],
+        order: ["change_number"],
+      },
+      { transaction }
+    );
     return reconstructCMDoc(changes);
   }
 
-  async recordCodeChanges(changes) {
+  async recordCodeChanges(changes, transaction) {
     let currentVersion = await this.countTypealongChanges();
     // Should probs check more lol
     // But: we assume it's in order and that there are no gaps :P
     // for (let ch of changes) {
     for (let { changeNumber, changesetJSON, ts } of changes) {
-      if (changeNumber !== currentVersion) continue;
-      await this.createTypealongChange({
-        change_number: changeNumber,
-        change: JSON.stringify(changesetJSON),
-        change_ts: ts,
-      });
+      if (changeNumber !== currentVersion) {
+        console.warn(
+          `Expected change #${currentVersion} but got #${changeNumber}`
+        );
+        return;
+      }
+      await this.createTypealongChange(
+        {
+          change_number: changeNumber,
+          change: JSON.stringify(changesetJSON),
+          change_ts: ts,
+        },
+        { transaction }
+      );
       currentVersion++;
     }
     return currentVersion;
@@ -178,46 +199,67 @@ export class NotesSession extends Model {
   // Returns all the deltas, in order.
   // TODO: consider calculating the resulting Delta (i.e., the current document)
   // on server-side.
-  async getDeltas() {
-    let res = await this.getNotesChanges({
-      attributes: ["change", "change_number"],
-      order: ["change_number"],
-    });
-    return res;
+  async getDeltas(transaction) {
+    return await this.getNotesChanges(
+      {
+        attributes: ["change", "change_number"],
+        order: ["change_number"],
+      },
+      { transaction }
+    );
   }
 
-  async addChanges(changes) {
-    let currentVersion = await this.countNotesChanges();
+  async addChanges(changes, transaction) {
+    let currentVersion = await this.countNotesChanges({ transaction });
     // TODO: check more?
     for (let { changeNumber, delta, ts } of changes) {
-      if (changeNumber !== currentVersion) continue;
-      await this.createNotesChange({
-        change_number: changeNumber,
-        change: JSON.stringify(delta),
-        change_ts: ts,
-      });
+      if (changeNumber !== currentVersion) {
+        console.warn(
+          `Received notes change #${changeNumber}, but was expecting ${currentVersion}`
+        );
+        return;
+      }
+      await this.createNotesChange(
+        {
+          change_number: changeNumber,
+          change: JSON.stringify(delta),
+          change_ts: ts,
+        },
+        { transaction }
+      );
       currentVersion++;
     }
     return currentVersion;
   }
 
-  async currentPlaygroundCode() {
-    let changes = await this.getPlaygroundCodeChanges({
-      attributes: ["change", "change_number"],
-      order: ["change_number"],
-    });
+  async currentPlaygroundCode(transaction) {
+    let changes = await this.getPlaygroundCodeChanges(
+      {
+        attributes: ["change", "change_number"],
+        order: ["change_number"],
+      },
+      { transaction }
+    );
     return reconstructCMDoc(changes);
   }
 
-  async recordCodeChanges(changes) {
+  async recordCodeChanges(changes, transaction) {
     let currentVersion = await this.countPlaygroundCodeChanges();
     for (let { changeNumber, changesetJSON, ts } of changes) {
-      if (changeNumber !== currentVersion) continue;
-      await this.createPlaygroundCodeChange({
-        change_number: changeNumber,
-        change: JSON.stringify(changesetJSON),
-        change_ts: ts,
-      });
+      if (changeNumber !== currentVersion) {
+        console.warn(
+          `Expected change #${currentVersion}; got #${changeNumber}`
+        );
+        return;
+      }
+      await this.createPlaygroundCodeChange(
+        {
+          change_number: changeNumber,
+          change: JSON.stringify(changesetJSON),
+          change_ts: ts,
+        },
+        { transaction }
+      );
       currentVersion++;
     }
     return currentVersion;

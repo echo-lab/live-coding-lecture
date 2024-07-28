@@ -2,35 +2,46 @@ import express from "express";
 import ViteExpress from "vite-express";
 import * as http from "http";
 import { Server } from "socket.io";
-import { LectureSession } from "./database.js";
+import { db, LectureSession } from "./database.js";
 import { CLIENT_TYPE, SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
 import { ChangeBuffer } from "./change-buffer.js";
 
 const app = express();
 app.use(express.json());
 
-let instructorChangeBuffer = new ChangeBuffer(5000);
+let instructorChangeBuffer = new ChangeBuffer(5000, db);
 
 // Get or create the current session
 app.post("/current-session", async (req, res) => {
-  let sesh =
-    (await LectureSession.current()) || (await LectureSession.create());
-  console.log("Session ID: ", sesh.id);
-
-  await instructorChangeBuffer.flush(); // In case there are any pending, even if they're erroneous lol.
-  let { doc, docVersion } = await sesh.getDoc();
-  res.json({ doc: doc.toJSON(), docVersion, sessionNumber: sesh.id });
+  try {
+    let response = await db.transaction(async (t) => {
+      let sesh = await LectureSession.current(t);
+      sesh = sesh || (await LectureSession.create({}, { transaction: t }));
+      await instructorChangeBuffer.flush(t);
+      let { doc, docVersion } = await sesh.getDoc(t);
+      return { doc: doc.toJSON(), docVersion, sessionNumber: sesh.id };
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Error getting or creating new lecture:", error);
+    res.json({ error: error.message });
+  }
 });
 
 app.get("/current-session", async (req, res) => {
-  let sesh = await LectureSession.current();
-  if (!sesh) {
-    res.json({ doc: null, docVersion: null });
-    return;
+  try {
+    let response = await db.transaction(async (t) => {
+      let sesh = await LectureSession.current(t);
+      if (!sesh) return {};
+      await instructorChangeBuffer.flush(t);
+      let { doc, docVersion } = await sesh.getDoc(t);
+      return { doc: doc.toJSON(), docVersion, sessionNumber: sesh.id };
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Error getting or creating new lecture:", error);
+    res.json({ error: error.message });
   }
-  await instructorChangeBuffer.flush();
-  let { doc, docVersion } = await sesh.getDoc();
-  res.json({ doc: doc.toJSON(), docVersion, sessionNumber: sesh.id });
 });
 
 app.get("/instructor-changes/:docversion", async (req, res) => {
@@ -39,13 +50,18 @@ app.get("/instructor-changes/:docversion", async (req, res) => {
     res.json({ error: `invalid doc version: ${req.params.docversion}` });
     return;
   }
-  let sesh = await LectureSession.current();
-  if (!sesh) {
-    res.json({ error: "no session" });
-  }
-  let changes = sesh && (await sesh.changesSinceVersion(docVersion));
 
-  res.json({ changes });
+  try {
+    let response = await db.transaction(async (t) => {
+      let sesh = await LectureSession.current(t);
+      if (!sesh) return { error: "no session" };
+      return { changes: await sesh.changesSinceVersion(docVersion, t) };
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Error retrieving changes: ", error);
+    res.json({ error: error.message });
+  }
 });
 
 // Create a session if it doesn't exist.
@@ -61,37 +77,39 @@ app.post("/current-session-notes", async (req, res) => {
     return;
   }
 
-  let lecture = await LectureSession.current();
-  if (!lecture) {
-    res.json({ error: "no lecture" });
-    return;
+  try {
+    let response = await db.transaction(async (t) => {
+      let lecture = await LectureSession.current(t);
+      if (!lecture) return {};
+      let notesSession = await lecture.getNotesSessions(
+        { where: { email } },
+        { transaction: t }
+      );
+      let sesh =
+        notesSession.length > 0
+          ? notesSession[0]
+          : await lecture.createNotesSession({ email }, { transaction: t });
+
+      let notesDocChanges = await sesh.getDeltas(t);
+
+      let { doc, docVersion } = await sesh.currentPlaygroundCode(t);
+      await instructorChangeBuffer.flush(t);
+
+      let { doc: lectureDoc, docVersion: lectureDocVersion } =
+        await lecture.getDoc(t);
+      return {
+        playgroundCodeInfo: { doc, docVersion },
+        notesDocChanges,
+        sessionNumber: lecture.id,
+        lectureDoc,
+        lectureDocVersion,
+      };
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Failed to get or create the current notes session: ", error);
+    res.json({ error: error.message });
   }
-
-  let notesSessions = await lecture.getNotesSessions({
-    where: { email },
-  });
-
-  let sesh =
-    notesSessions.length > 0
-      ? notesSessions[0]
-      : await lecture.createNotesSession({ email });
-
-  // Just return all the changes so far... lol
-  let notesDocChanges = await sesh.getDeltas();
-
-  // Get the current code-mirror doc and version from the playground code editor.
-  let { doc, docVersion } = await sesh.currentPlaygroundCode();
-  await instructorChangeBuffer.flush();
-  let { doc: lectureDoc, docVersion: lectureDocVersion } =
-    await lecture.getDoc();
-
-  res.json({
-    playgroundCodeInfo: { doc, docVersion },
-    notesDocChanges,
-    sessionNumber: lecture.id,
-    lectureDoc,
-    lectureDocVersion,
-  });
 });
 
 app.post("/record-notes-changes", async (req, res) => {
@@ -102,22 +120,26 @@ app.post("/record-notes-changes", async (req, res) => {
     return res.json({ error: "malformed request" });
   }
 
-  // TODO: we could also look for the cache first lol.
-  let lecture = await LectureSession.findByPk(sessionNumber);
-  if (!lecture) {
-    return res.json({ error: "no session" });
+  try {
+    let response = await db.transaction(async (t) => {
+      let lecture = await LectureSession.findByPk(sessionNumber, {
+        transaction: t,
+      });
+      if (!lecture) return { error: `invalid session: ${sessionNumber}` };
+      let sesh = await lecture.getNotesSessions(
+        { where: { email } },
+        { transaction: t }
+      );
+      if (sesh.length === 0) return { error: "notes session not started?" };
+      sesh = sesh[0];
+      let committedVersion = await sesh.addChanges(changes, t);
+      return { committedVersion };
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Failed to record notes change: ", error);
+    return { error: error.message };
   }
-
-  let sesh = await lecture.getNotesSessions({ where: { email } });
-  if (sesh.length === 0) {
-    console.warn("Notes session changes written before handshake established!");
-    return res.json({ error: "typealong session not started?" });
-    // We can probably just make one then.
-  }
-  sesh = sesh[0];
-
-  let committedVersion = await sesh.addChanges(changes);
-  res.json({ committedVersion });
 });
 
 app.post("/current-session-typealong", async (req, res) => {
@@ -127,23 +149,31 @@ app.post("/current-session-typealong", async (req, res) => {
     return;
   }
 
-  let lecture = await LectureSession.current();
-  if (!lecture) {
-    res.json({ error: "no session" });
-    return;
+  try {
+    let response = await db.transaction(async (t) => {
+      let lecture = await LectureSession.current(t);
+      if (!lecture) return {};
+
+      let typealongSessions = await lecture.getTypealongSessions(
+        {
+          where: { email },
+        },
+        { transaction: t }
+      );
+
+      let sesh =
+        typealongSessions.length > 0
+          ? typealongSessions[0]
+          : await lecture.createTypealongSession({ email }, { transaction: t });
+      let { doc, docVersion } = await sesh.getCurrentDoc(t);
+      return { doc: doc.toJSON(), docVersion, sessionNumber: lecture.id };
+      // code goes here
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Failed to retrieve current typealong session", error);
+    return { error: error.message };
   }
-
-  let typealongSessions = await lecture.getTypealongSessions({
-    where: { email },
-  });
-
-  let sesh =
-    typealongSessions.length > 0
-      ? typealongSessions[0]
-      : await lecture.createTypealongSession({ email });
-  let { doc, docVersion } = await sesh.getCurrentDoc();
-
-  res.json({ doc: doc.toJSON(), docVersion, sessionNumber: lecture.id });
 });
 
 app.post("/record-typealong-changes", async (req, res) => {
@@ -166,58 +196,89 @@ app.post("/record-user-action", async (req, res) => {
   } = req.body;
   if (!source) return;
 
-  let lecture = await LectureSession.findByPk(sessionNumber);
-  if (!lecture) return;
+  try {
+    let response = await db.transaction(async (t) => {
+      let lecture = await LectureSession.findByPk(sessionNumber, {
+        transaction: t,
+      });
+      if (!lecture)
+        throw new Error(
+          `Can't record user action for non-existing session #${sessionNumber}`
+        );
 
-  const record = {
-    action_ts: ts,
-    code_version: codeVersion,
-    doc_version: docVersion,
-    action_type: actionType,
-  };
+      const record = {
+        action_ts: ts,
+        code_version: codeVersion,
+        doc_version: docVersion,
+        action_type: actionType,
+      };
 
-  if (source === CLIENT_TYPE.INSTRUCTOR) {
-    await lecture.createInstructorAction(record);
-  } else if (source === CLIENT_TYPE.TYPEALONG) {
-    let sesh = await lecture.getTypealongSessions({ where: { email } });
-    await sesh[0].createTypealongAction(record);
-  } else if (source === CLIENT_TYPE.NOTES) {
-    let sesh = await lecture.getNotesSessions({ where: { email } });
-    await sesh[0].createNotesAction(record);
-  } else {
-    console.warning("bad source value...");
-    return;
+      if (source === CLIENT_TYPE.INSTRUCTOR) {
+        await lecture.createInstructorAction(record, { transaction: t });
+      } else if (source === CLIENT_TYPE.TYPEALONG) {
+        let sesh = await lecture.getTypealongSessions(
+          { where: { email } },
+          { transaction: t }
+        );
+        await sesh[0].createTypealongAction(record, { transaction: t });
+      } else if (source === CLIENT_TYPE.NOTES) {
+        let sesh = await lecture.getNotesSessions(
+          { where: { email } },
+          { transaction: t }
+        );
+        await sesh[0].createNotesAction(record, { transaction: t });
+      } else {
+        throw new Error(`User action with unknown source: ${source}`);
+      }
+      return { success: true };
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Failed to log user action", error);
+    return { error: error.message };
   }
 });
 
 async function recordBatchCodeChanges(req, res, isTypealong) {
-  let email = req.body?.email;
-  let sessionNumber = req.body?.sessionNumber;
-  let changes = req.body?.changes;
-  if (!email || !sessionNumber || !changes) {
-    res.json({ error: "malformed request" });
-    return;
+  try {
+    let response = await db.transaction(async (t) => {
+      // code goes here
+      let email = req.body?.email;
+      let sessionNumber = req.body?.sessionNumber;
+      let changes = req.body?.changes;
+      if (!email || !sessionNumber || !changes)
+        throw new Error(`Missing email, session, or changes: ${req}`);
+
+      let lecture = await LectureSession.findByPk(sessionNumber, {
+        transaction: t,
+      });
+      if (!lecture) throw new Error(`Couldn't find session #${sessionNumber}`);
+
+      let sesh = isTypealong
+        ? await lecture.getTypealongSessions(
+            { where: { email } },
+            { transaction: t }
+          )
+        : await lecture.getNotesSessions(
+            { where: { email } },
+            { transaction: t }
+          );
+
+      if (sesh.length === 0) {
+        throw new Error(
+          "Can't record changes for session which hasn't started"
+        );
+      }
+      sesh = sesh[0];
+
+      let committedVersion = await sesh.recordCodeChanges(changes, t);
+      return { committedVersion };
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Failed to record batch code changes", error);
+    return { error: error.message };
   }
-
-  let lecture = await LectureSession.findByPk(sessionNumber);
-  if (!lecture) {
-    res.json({ error: "no session" });
-    return;
-  }
-
-  let sesh = isTypealong
-    ? await lecture.getTypealongSessions({ where: { email } })
-    : await lecture.getNotesSessions({ where: { email } });
-
-  if (sesh.length === 0) {
-    res.json({ error: "student session not started?" });
-    console.warn("Student session not started???");
-    return;
-  }
-  sesh = sesh[0];
-
-  let committedVersion = await sesh.recordCodeChanges(changes);
-  res.json({ committedVersion });
 }
 
 // ViteExpress.listen(app, 3000, () =>
@@ -257,8 +318,15 @@ io.on("connection", async (socket) => {
     // Forward immediately
     io.emit(SOCKET_MESSAGE_TYPE.INSTRUCTOR_END_SESSION, msg);
 
-    let lecture = await LectureSession.findByPk(msg.sessionNumber);
-    lecture && (await lecture.update({ isFinished: true }));
+    try {
+      await db.transaction(async (t) => {
+        let lecture = await LectureSession.findByPk(msg.sessionNumber);
+        lecture &&
+          (await lecture.update({ isFinished: true }, { transaction: t }));
+      });
+    } catch (error) {
+      console.error("failed to close session: ", error);
+    }
   });
 });
 
