@@ -44,6 +44,15 @@ function reconstructCMDoc(changes) {
 
 // NOTE: this class is written for a SINGLE THREADED SERVER!!! Consider rewriting :)
 export class LectureSession extends Model {
+  static async current() {
+    let sesh = await LectureSession.findAll({
+      where: { isFinished: false },
+      order: [["id", "DESC"]],
+    });
+    // TODO: Probably try to make sure there's not more than one session lol.
+    return sesh.length > 0 ? sesh[0] : null;
+  }
+
   async changesSinceVersion(docVersion) {
     // Compose all the changes; return the resulting change and the latest version number
     let changes = await this.getInstructorChanges({

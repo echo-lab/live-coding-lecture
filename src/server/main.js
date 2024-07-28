@@ -11,18 +11,10 @@ app.use(express.json());
 
 let instructorChangeBuffer = new ChangeBuffer(5000);
 
-async function getCurrentLecture() {
-  let sesh = await LectureSession.findAll({
-    where: { isFinished: false },
-    order: [["id", "DESC"]],
-  });
-  // TODO: Probably try to make sure there's not more than one session lol.
-  return sesh.length > 0 ? sesh[0] : null;
-}
-
 // Get or create the current session
 app.post("/current-session", async (req, res) => {
-  let sesh = (await getCurrentLecture()) || (await LectureSession.create());
+  let sesh =
+    (await LectureSession.current()) || (await LectureSession.create());
   console.log("Session ID: ", sesh.id);
 
   await instructorChangeBuffer.flush(); // In case there are any pending, even if they're erroneous lol.
@@ -31,7 +23,7 @@ app.post("/current-session", async (req, res) => {
 });
 
 app.get("/current-session", async (req, res) => {
-  let sesh = await getCurrentLecture();
+  let sesh = await LectureSession.current();
   if (!sesh) {
     res.json({ doc: null, docVersion: null });
     return;
@@ -47,7 +39,7 @@ app.get("/instructor-changes/:docversion", async (req, res) => {
     res.json({ error: `invalid doc version: ${req.params.docversion}` });
     return;
   }
-  let sesh = await getCurrentLecture();
+  let sesh = await LectureSession.current();
   if (!sesh) {
     res.json({ error: "no session" });
   }
@@ -69,7 +61,7 @@ app.post("/current-session-notes", async (req, res) => {
     return;
   }
 
-  let lecture = await getCurrentLecture();
+  let lecture = await LectureSession.current();
   if (!lecture) {
     res.json({ error: "no lecture" });
     return;
@@ -135,7 +127,7 @@ app.post("/current-session-typealong", async (req, res) => {
     return;
   }
 
-  let lecture = await getCurrentLecture();
+  let lecture = await LectureSession.current();
   if (!lecture) {
     res.json({ error: "no session" });
     return;
