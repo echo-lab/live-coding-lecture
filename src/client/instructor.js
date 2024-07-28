@@ -37,10 +37,9 @@ async function getOrCreateSession(createIfNoSesh) {
   return res.sessionNumber;
 }
 
-if (!(await getOrCreateSession(false))) {
-  // No current session
-  startButton.disabled = false;
-}
+getOrCreateSession(false).then((res) => {
+  !res && (startButton.disabled = false);
+});
 
 // If it's not disabled already, start button should create a new session
 startButton.addEventListener("click", async () => {
