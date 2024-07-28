@@ -1,5 +1,5 @@
 import { SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
-import { LectureSession } from "./database.js";
+import { LectureSession } from "./models.js";
 import { ChangeSet } from "@codemirror/state";
 
 // This only supports the Instructor's changes for now.

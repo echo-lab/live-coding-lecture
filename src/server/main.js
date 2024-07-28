@@ -2,7 +2,8 @@ import express from "express";
 import ViteExpress from "vite-express";
 import * as http from "http";
 import { Server } from "socket.io";
-import { db, LectureSession } from "./database.js";
+import { db } from "./database.js";
+import { LectureSession } from "./models.js";
 import { CLIENT_TYPE, SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
 import { ChangeBuffer } from "./change-buffer.js";
 
