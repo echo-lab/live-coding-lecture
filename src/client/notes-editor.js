@@ -146,7 +146,8 @@ export class NotesEditor {
       },
       Quill.sources.USER
     );
-    this.quill.setSelection(range.index + 2, Quill.sources.SILENT);
+    this.quill.setSelection(range.index+1, 1, Quill.sources.USER);
+    this.quill.scrollSelectionIntoView();
   }
 
   onEditorChange(delta, oldDelta, source) {

@@ -192,3 +192,7 @@
   height: 80%;
   font-size: x-small;
 }
+
+.ql-editor {
+  scroll-behavior: smooth;
+}
