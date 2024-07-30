@@ -16,6 +16,7 @@ LectureSession
 */
 
 const CODE_CHANGE_SCHEMA = {
+  file_name: DataTypes.STRING, // Only for Typealong Changes :)
   change_number: DataTypes.INTEGER,
   change: DataTypes.TEXT,
   change_ts: DataTypes.INTEGER,
@@ -115,41 +116,75 @@ LectureSession.hasMany(InstructorAction, { foreignKey: "LectureSessionsId" });
 InstructorAction.belongsTo(LectureSession);
 
 export class TypealongSession extends Model {
-  // SLOW-ish
-  async getCurrentDoc(transaction) {
+  // Get a map: {fileName: {doc, docVersion}}
+  async getCurrentDocs(transaction) {
     let changes = await this.getTypealongChanges(
       {
-        attributes: ["change", "change_number"],
+        attributes: ["change", "change_number", "file_name"],
         order: ["change_number"],
       },
       { transaction }
     );
-    return reconstructCMDoc(changes);
+    let changesByFile = {};
+    for (let { change, file_name } of changes) {
+      if (!changesByFile[file_name]) {
+        changesByFile[file_name] = [{ change }];
+      } else {
+        changesByFile[file_name].push({ change });
+      }
+    }
+    let docsByFile = {};
+    Object.entries(changesByFile).forEach(([file, changes]) => {
+      let { doc, docVersion } = reconstructCMDoc(changes);
+      docsByFile[file] = { doc: doc.toJSON(), docVersion };
+    });
+    return docsByFile;
   }
 
   async recordCodeChanges(changes, transaction) {
-    let currentVersion = await this.countTypealongChanges();
+    let fileAndVersion = await this.getTypealongChanges(
+      {
+        group: ["file_name"],
+        attributes: [
+          "file_name",
+          [sequelize.fn("COUNT", "file_name"), "docVersion"],
+        ],
+      },
+      { transaction }
+    );
+
+    let fileToVersion = {};
+    for (let {
+      file_name,
+      dataValues: { docVersion },
+    } of fileAndVersion) {
+      fileToVersion[file_name] = docVersion;
+    }
+
     // Should probs check more lol
     // But: we assume it's in order and that there are no gaps :P
     // for (let ch of changes) {
-    for (let { changeNumber, changesetJSON, ts } of changes) {
-      if (changeNumber !== currentVersion) {
+    for (let { fileName, changeNumber, changesetJSON, ts } of changes) {
+      if (!fileToVersion[fileName]) fileToVersion[fileName] = 0;
+
+      if (changeNumber !== fileToVersion[fileName]) {
         console.warn(
-          `Expected change #${currentVersion} but got #${changeNumber}`
+          `Expected change #${fileToVersion[fileName]} but got #${changeNumber}`
         );
         return;
       }
       await this.createTypealongChange(
         {
+          file_name: fileName,
           change_number: changeNumber,
           change: JSON.stringify(changesetJSON),
           change_ts: ts,
         },
         { transaction }
       );
-      currentVersion++;
+      fileToVersion[fileName]++;
     }
-    return currentVersion;
+    return fileToVersion;
   }
 }
 
@@ -167,23 +202,7 @@ LectureSession.hasMany(TypealongSession, { foreignKey: "LectureSessionsId" });
 TypealongSession.belongsTo(LectureSession);
 
 export class TypealongChange extends Model {}
-
-TypealongChange.init(
-  {
-    change_number: {
-      type: DataTypes.INTEGER,
-    },
-    change: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    change_ts: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-  },
-  { sequelize }
-);
+TypealongChange.init(CODE_CHANGE_SCHEMA, { sequelize });
 
 TypealongSession.hasMany(TypealongChange, { foreignKey: "TypealongChangeId" });
 TypealongChange.belongsTo(TypealongSession);

@@ -3,40 +3,51 @@ import { clearEmail, POST_JSON_REQUEST } from "./utils";
 
 const MAX_OUTPUT_LENGTH = 50;
 
-const FILE_NAME = {
-  [CLIENT_TYPE.INSTRUCTOR]: "instructor.py",
-  [CLIENT_TYPE.TYPEALONG]: "notes.py",
-  [CLIENT_TYPE.NOTES]: "playground.py",
-};
+// Wrapping this in an object so we can swap out the editor when we have multiple tabs.
+export class RunInteractions {
+  constructor({
+    runButtonEl,
+    codeEditor,
+    codeRunner,
+    consoleOutput,
+    sessionNumber,
+    source,
+    email,
+    broadcastResult = () => {},
+  }) {
+    this.editor = codeEditor;
+    this.running = false;
 
-export function initializeRunInteractions({
-  runButtonEl,
-  codeEditor,
-  codeRunner,
-  consoleOutput,
-  sessionNumber,
-  source,
-  email,
-  broadcastResult = () => {},
-}) {
-  let running = false;
-  let el = runButtonEl;
-  let fileName = FILE_NAME[source];
-  runButtonEl.addEventListener("click", async () => {
-    if (running) return;
-    running = true;
-    el.classList.add("in-progress");
-    el.disabled = true;
-    el.textContent = "Running...";
+    this.el = runButtonEl;
+    this.runner = codeRunner;
+    this.console = consoleOutput;
+    this.sessionNumber = sessionNumber;
+    this.source = source;
+    this.email = email;
+    this.broadcastResult = broadcastResult;
+
+    runButtonEl.addEventListener("click", this.runCode.bind(this));
+  }
+
+  setEditor(editor) {
+    this.editor = editor;
+  }
+
+  async runCode() {
+    if (this.running) return;
+    this.running = true;
+    this.el.classList.add("in-progress");
+    this.el.disabled = true;
+    this.el.textContent = "Running...";
 
     // Record the action on the server. No need to await.
     let payload = {
       ts: Date.now(),
-      codeVersion: codeEditor.getDocVersion(),
+      codeVersion: this.editor.getDocVersion(),
       actionType: USER_ACTIONS.CODE_RUN,
-      sessionNumber,
-      source,
-      email,
+      sessionNumber: this.sessionNumber,
+      source: this.source,
+      email: this.email,
     };
     fetch("/record-user-action", {
       body: JSON.stringify(payload),
@@ -44,17 +55,17 @@ export function initializeRunInteractions({
     });
 
     let minRunTime = new Promise((resolve) => setTimeout(resolve, 500));
-    let code = codeEditor.currentCode();
-    let res = await codeRunner.asyncRun(code);
+    let code = this.editor.currentCode();
+    let res = await this.runner.asyncRun(code);
     await minRunTime;
-    consoleOutput.addResult({ fileName, ...res });
-    broadcastResult({ fileName, ...res }); // A no-op in student interfaces.
+    this.console.addResult({ fileName: this.editor.fileName, ...res });
+    this.broadcastResult({ fileName: this.editor.fileName, ...res }); // A no-op in student interfaces.
 
-    el.classList.remove("in-progress");
-    el.disabled = false;
-    el.textContent = "▶ ️Run";
-    running = false;
-  });
+    this.el.classList.remove("in-progress");
+    this.el.disabled = false;
+    this.el.textContent = "▶ ️Run";
+    this.running = false;
+  }
 }
 
 const MAX_HEIGHT = 400;

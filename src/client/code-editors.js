@@ -32,6 +32,7 @@ export class StudentCodeEditor {
     doc,
     docVersion,
     sessionNumber,
+    fileName = "",
     email,
     flushUrl,
     onNewSnapshot = null,
@@ -43,6 +44,7 @@ export class StudentCodeEditor {
     this.queuedChanges = [];
     this.sessionNumber = sessionNumber;
     this.flushUrl = flushUrl;
+    this.fileName = fileName;
 
     let snapshotExtensions = onNewSnapshot
       ? codeSnapshotFields(onNewSnapshot)
@@ -83,6 +85,7 @@ export class StudentCodeEditor {
         changesetJSON: tr.changes.toJSON(),
         changeNumber: this.docVersion,
         ts: Date.now(),
+        fileName: this.fileName,
       });
       this.docVersion++;
     });
@@ -229,10 +232,18 @@ export class CodeFollowingEditor {
 }
 
 export class InstructorCodeEditor {
-  constructor({ node, socket, doc, startVersion, sessionNumber }) {
+  constructor({
+    node,
+    socket,
+    doc,
+    startVersion,
+    sessionNumber,
+    fileName = "instructor.py",
+  }) {
     this.docVersion = startVersion;
     this.socket = socket;
     this.sessionNumber = sessionNumber;
+    this.fileName = fileName;
 
     let state = EditorState.create({
       doc: Text.of(doc),

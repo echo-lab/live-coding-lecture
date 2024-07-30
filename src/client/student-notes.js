@@ -8,8 +8,8 @@ import { CodeFollowingEditor, StudentCodeEditor } from "./code-editors.js";
 import { PythonCodeRunner } from "./code-runner.js";
 import {
   Console,
-  initializeRunInteractions,
   makeConsoleResizable,
+  RunInteractions,
   setUpChangeEmail,
 } from "./shared-interactions.js";
 import {
@@ -119,6 +119,7 @@ async function attemptInitialization() {
     doc: playgroundDoc,
     docVersion: playgroundDocVersion,
     sessionNumber,
+    fileName: "playground.py",
     email,
     flushUrl: "/record-playground-changes",
     onNewSnapshot: notesEditor.createAnchor.bind(notesEditor, "playground.py"),
@@ -128,7 +129,7 @@ async function attemptInitialization() {
   // Set up the run button for the playground tab.
   let codeRunner = new PythonCodeRunner();
   let consoleOutput = new Console(codeOutputsEl);
-  initializeRunInteractions({
+  let runInteractions = new RunInteractions({
     runButtonEl,
     codeEditor: playgroundEditor,
     codeRunner,

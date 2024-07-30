@@ -159,6 +159,8 @@ h2 {
 
 .code-tab {
   padding: 5px;
+  padding-left:10px;
+  padding-right: 10px;
   border-color: lightgrey;
   border-width: 1px;
   border-style: solid;
@@ -167,6 +169,16 @@ h2 {
   justify-content: center;
   background-color: rgb(244, 244, 244);
   cursor: pointer;
+}
+
+#add-tab {
+  background-color: white;
+  border-style: none;
+}
+
+#add-tab:hover {
+  background-color: rgb(244, 244, 244);
+  border-style: solid;
 }
 
 #code-tabs .code-tab:first-of-type {

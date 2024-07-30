@@ -167,9 +167,10 @@ app.post("/current-session-typealong", async (req, res) => {
         typealongSessions.length > 0
           ? typealongSessions[0]
           : await lecture.createTypealongSession({ email }, { transaction: t });
-      let { doc, docVersion } = await sesh.getCurrentDoc(t);
-      return { doc: doc.toJSON(), docVersion, sessionNumber: lecture.id };
-      // code goes here
+      return {
+        sessionNumber: lecture.id,
+        docs: await sesh.getCurrentDocs(t),
+      };
     });
     res.json(response);
   } catch (error) {

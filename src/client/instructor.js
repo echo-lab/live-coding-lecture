@@ -6,7 +6,7 @@ import { GET_JSON_REQUEST, POST_JSON_REQUEST } from "./utils.js";
 import { PythonCodeRunner } from "./code-runner.js";
 import {
   Console,
-  initializeRunInteractions,
+  RunInteractions,
   makeConsoleResizable,
 } from "./shared-interactions.js";
 import { InstructorCodeEditor } from "./code-editors.js";
@@ -63,7 +63,7 @@ function initialize({ doc = null, docVersion = null, sessionNumber = null }) {
   let codeRunner = new PythonCodeRunner();
   let consoleOutput = new Console(outputCodeContainer);
 
-  initializeRunInteractions({
+  let runInteractions = new RunInteractions({
     runButtonEl,
     codeEditor,
     codeRunner,
