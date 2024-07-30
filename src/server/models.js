@@ -28,6 +28,7 @@ const USER_ACTION_SCHEMA = {
   code_version: DataTypes.INTEGER,
   doc_version: DataTypes.INTEGER,
   action_type: DataTypes.STRING,
+  details: DataTypes.STRING,
 };
 
 function reconstructCMDoc(changes) {

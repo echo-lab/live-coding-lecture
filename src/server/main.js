@@ -196,6 +196,7 @@ app.post("/record-user-action", async (req, res) => {
     sessionNumber,
     source,
     email,
+    details,
   } = req.body;
   if (!source) return;
 
@@ -214,6 +215,7 @@ app.post("/record-user-action", async (req, res) => {
         code_version: codeVersion,
         doc_version: docVersion,
         action_type: actionType,
+        details,
       };
 
       if (source === CLIENT_TYPE.INSTRUCTOR) {

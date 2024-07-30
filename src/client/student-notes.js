@@ -57,24 +57,6 @@ const socket = io();
 
 const INSTRUCTOR_TAB = 0;
 const PLAYGROUND_TAB = 1;
-let selectTab = (tab) => {
-  if (instructorTabActive && tab === INSTRUCTOR_TAB) return;
-  if (!instructorTabActive && tab === PLAYGROUND_TAB) return;
-
-  instructorTabActive = !instructorTabActive;
-
-  let [open, closed] = [instructorCodeTab, playgroundCodeTab];
-  if (tab === PLAYGROUND_TAB) [open, closed] = [closed, open];
-  open.classList.add("selected");
-  closed.classList.remove("selected");
-
-  [open, closed] = [instructorCodeContainer, playgroundCodeContainer];
-  if (tab === PLAYGROUND_TAB) [open, closed] = [closed, open];
-  open.style.display = "grid";
-  closed.style.display = "none";
-
-  // runButton.style.display = tab === INSTRUCTOR_TAB ? "none" : "grid";
-};
 
 //////////////////////////////////////////////////////
 // OKAY: wait until a session starts to initialize
@@ -144,6 +126,38 @@ async function attemptInitialization() {
   );
 
   // Set up the tabs to work.
+  let selectTab = (tab) => {
+    if (instructorTabActive && tab === INSTRUCTOR_TAB) return;
+    if (!instructorTabActive && tab === PLAYGROUND_TAB) return;
+
+    instructorTabActive = !instructorTabActive;
+
+    let [open, closed] = [instructorCodeTab, playgroundCodeTab];
+    if (tab === PLAYGROUND_TAB) [open, closed] = [closed, open];
+    open.classList.add("selected");
+    closed.classList.remove("selected");
+
+    [open, closed] = [instructorCodeContainer, playgroundCodeContainer];
+    if (tab === PLAYGROUND_TAB) [open, closed] = [closed, open];
+    open.style.display = "grid";
+    closed.style.display = "none";
+
+    // runButton.style.display = tab === INSTRUCTOR_TAB ? "none" : "grid";
+    let payload = {
+      ts: Date.now(),
+      docVersion: notesEditor.getDocVersion(),
+      codeVersion: playgroundEditor.getDocVersion(),
+      actionType: USER_ACTIONS.SWITCH_TAB,
+      sessionNumber,
+      source: CLIENT_TYPE.NOTES,
+      email,
+      details: tab === INSTRUCTOR_TAB ? "insructor.py" : "playground.py",
+    };
+    fetch("/record-user-action", {
+      body: JSON.stringify(payload),
+      ...POST_JSON_REQUEST,
+    });
+  };
   instructorCodeTab.addEventListener("click", () => selectTab(INSTRUCTOR_TAB));
   playgroundCodeTab.addEventListener("click", () => selectTab(PLAYGROUND_TAB));
 

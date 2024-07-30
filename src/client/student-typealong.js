@@ -12,7 +12,7 @@ import {
   RunInteractions,
   setUpChangeEmail,
 } from "./shared-interactions.js";
-import { CLIENT_TYPE, SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
+import { CLIENT_TYPE, SOCKET_MESSAGE_TYPE, USER_ACTIONS } from "../shared-constants.js";
 
 const TAB_NAMES = ["notes.py", "notes2.py", "notes3.py"];
 const codeContainers = ["", "2", "3"].map((n) =>
@@ -23,6 +23,7 @@ const codeTabButtons = ["#tab1", "#tab2", "#tab3"].map((s) =>
 );
 const addTabButton = document.querySelector("#add-tab");
 let highestTabIdx = 0;
+let curTab = 0;
 
 const studentDetailsContainer = document.querySelector("#student-email");
 const changeEmailLink = document.querySelector("#change-email");
@@ -105,6 +106,9 @@ async function attemptInitialization() {
   }
 
   let switchToTab = (idx) => {
+    if (idx === curTab) return;
+    curTab = idx;
+
     runButtonInteractions.setEditor(codeEditors[idx]);
     codeContainers.forEach((el, i) => {
       el.style.display = i == idx ? "" : "none";
@@ -113,6 +117,19 @@ async function attemptInitialization() {
       i === idx
         ? el.classList.add("selected")
         : el.classList.remove("selected");
+    });
+
+    let payload = {
+      ts: Date.now(),
+      actionType: USER_ACTIONS.SWITCH_TAB,
+      sessionNumber,
+      source: CLIENT_TYPE.TYPEALONG,
+      email,
+      details: TAB_NAMES[idx],
+    };
+    fetch("/record-user-action", {
+      body: JSON.stringify(payload),
+      ...POST_JSON_REQUEST,
     });
   };
 
