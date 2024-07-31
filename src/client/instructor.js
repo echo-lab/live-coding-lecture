@@ -36,7 +36,9 @@ async function getOrCreateSession(sessionName) {
   });
   let res = await response.json();
   // TODO: what if this fails? lol. It really shouldn't :)
-  console.log(res);
+  document.querySelector(
+    "#session-name-display"
+  ).innerText = `Lecture ID: ${sessionName}`;
   res.sessionNumber && initialize(res);
   console.log("TODO: write hte session name somewhere :)");
   return res.sessionNumber;

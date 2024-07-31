@@ -184,7 +184,7 @@ export function setupJoinLectureModal({ url, email, onSuccess }) {
       errorMessage.textContent = `Session "${sessionName}" does not exist. Please try again.`;
     } else {
       modal.style.display = "none";
-      sessionNameDisplay.innerText = `Session: ${sessionName}`;
+      sessionNameDisplay.innerText = `Lecture ID: ${sessionName}`;
       onSuccess(res);
     }
   };
