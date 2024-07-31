@@ -12,6 +12,17 @@ const app = express();
 app.use(express.json());
 
 let instructorChangeBuffer = new ChangeBuffer(5000, db);
+let flushInstructorChanges = async () => {
+  try {
+    await db.transaction(async (t) => {
+      await instructorChangeBuffer.flush(t);
+    });
+    return true;
+  } catch (error) {
+    console.error("Error flushing changes:", error);
+    return false;
+  }
+};
 
 // Return a list of all the sessions
 app.get("/lecture-sessions", async (req, res) => {
@@ -41,6 +52,9 @@ app.get("/lecture-sessions", async (req, res) => {
 // Get or create a lecture session
 app.post("/lecture-session", async (req, res) => {
   let sessionName = req.body?.sessionName;
+
+  await flushInstructorChanges();
+
   try {
     let response = await db.transaction(async (t) => {
       let sesh = await LectureSession.current(sessionName, t);
@@ -51,7 +65,6 @@ app.post("/lecture-session", async (req, res) => {
           { transaction: t }
         ));
 
-      await instructorChangeBuffer.flush(t);
       let { doc, docVersion } = await sesh.getDoc(t);
       return { doc: doc.toJSON(), docVersion, sessionNumber: sesh.id };
     });
@@ -70,14 +83,7 @@ app.get("/instructor-changes/:sessionId/:docversion", async (req, res) => {
     return;
   }
 
-  try {
-    await db.transaction(async (t) => {
-      await instructorChangeBuffer.flush(t);
-    });
-  } catch (error) {
-    console.error("Error flushing changes:", error);
-    res.json({ error: error.message });
-  }
+  await flushInstructorChanges();
 
   try {
     let response = await db.transaction(async (t) => {
@@ -106,6 +112,8 @@ app.post("/current-session-notes", async (req, res) => {
     return;
   }
 
+  flushInstructorChanges();
+
   try {
     let response = await db.transaction(async (t) => {
       let lecture = await LectureSession.current(sessionName, t);
@@ -122,7 +130,6 @@ app.post("/current-session-notes", async (req, res) => {
       let notesDocChanges = await sesh.getDeltas(t);
 
       let { doc, docVersion } = await sesh.currentPlaygroundCode(t);
-      await instructorChangeBuffer.flush(t);
 
       let { doc: lectureDoc, docVersion: lectureDocVersion } =
         await lecture.getDoc(t);
