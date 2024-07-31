@@ -40,7 +40,6 @@ async function getOrCreateSession(sessionName) {
     "#session-name-display"
   ).innerText = `Lecture ID: ${sessionName}`;
   res.sessionNumber && initialize(res);
-  console.log("TODO: write hte session name somewhere :)");
   return res.sessionNumber;
 }
 
