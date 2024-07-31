@@ -9,6 +9,7 @@ export default defineConfig({
         instructor: resolve(__dirname, "pages/instructor.html"),
         studentNotes: resolve(__dirname, "pages/student-notes.html"),
         studentTypealong: resolve(__dirname, "pages/student-typealong.html"),
+        listSessions: resolve(__dirname, "pages/sessions.html"),
       },
     },
   },

@@ -423,3 +423,16 @@ pre {
   margin-top: 10px;
   border: solid 1px black;
 }
+
+table {
+  border-collapse: collapse;
+}
+
+td {
+  padding: 5px;
+  border: solid 1px black;
+}
+
+.OPEN {
+  background-color: lightgreen;
+}

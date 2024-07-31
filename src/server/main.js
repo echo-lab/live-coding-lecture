@@ -13,6 +13,31 @@ app.use(express.json());
 
 let instructorChangeBuffer = new ChangeBuffer(5000, db);
 
+// Return a list of all the sessions
+app.get("/lecture-sessions", async (req, res) => {
+  try {
+    let response = await db.transaction(async (t) => {
+      let sessions = await LectureSession.findAll(
+        {
+          order: [["createdAt", "DESC"]],
+        },
+        { transaction: t }
+      );
+      sessions = sessions.map((sesh) => ({
+        id: sesh.id,
+        name: sesh.name,
+        startTime: sesh.createdAt,
+        status: sesh.isFinished ? "CLOSED" : "OPEN",
+      }));
+      return { sessions };
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Error fetching all sessions:", error);
+    res.json({ error: error.message });
+  }
+});
+
 // Get or create a lecture session
 app.post("/lecture-session", async (req, res) => {
   let sessionName = req.body?.sessionName;
