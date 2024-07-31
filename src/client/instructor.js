@@ -28,23 +28,30 @@ const socket = io();
 ///////////////////////////////
 // Initialize w/ the Server
 ///////////////////////////////
-async function getOrCreateSession(createIfNoSesh) {
-  const ops = createIfNoSesh ? POST_JSON_REQUEST : GET_JSON_REQUEST;
-  const response = await fetch("/current-session", ops);
+
+async function getOrCreateSession(sessionName) {
+  const response = await fetch("/lecture-session", {
+    body: JSON.stringify({ sessionName }),
+    ...POST_JSON_REQUEST,
+  });
   let res = await response.json();
+  // TODO: what if this fails? lol. It really shouldn't :)
+  console.log(res);
   res.sessionNumber && initialize(res);
+  console.log("TODO: write hte session name somewhere :)");
   return res.sessionNumber;
 }
-
-getOrCreateSession(false).then((res) => {
-  !res && (startButton.disabled = false);
-});
 
 // If it's not disabled already, start button should create a new session
 startButton.addEventListener("click", async () => {
   startButton.disabled = true;
   endButton.disabled = false;
-  await getOrCreateSession(true);
+  let sessionName = prompt("Session name: ");
+  if (!sessionName) {
+    alert("Please enter a valid session name");
+    return;
+  }
+  await getOrCreateSession(sessionName);
 });
 
 // Start up the editor and hook up the end session button.

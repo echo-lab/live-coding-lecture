@@ -145,8 +145,9 @@ Doesn't log any activity -- only reads from the server.
 */
 export class CodeFollowingEditor {
   // Initialize CodeMirror and listen for instructor updates.
-  constructor(node, doc, docVersion, socket, onNewSnapshot) {
+  constructor(node, doc, docVersion, socket, onNewSnapshot, sessionId) {
     this.docVersion = docVersion;
+    this.sessionId = sessionId;
     let state = EditorState.create({
       doc: Text.of(doc),
       extensions: [
@@ -204,7 +205,7 @@ export class CodeFollowingEditor {
 
   async catchUpOnChanges() {
     const response = await fetch(
-      `/instructor-changes/${this.docVersion}`,
+      `/instructor-changes/${this.sessionId}/${this.docVersion}`,
       GET_JSON_REQUEST
     );
     let res = await response.json();

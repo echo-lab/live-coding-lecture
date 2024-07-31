@@ -45,10 +45,11 @@ function reconstructCMDoc(changes) {
 
 // NOTE: this class is written for a SINGLE THREADED SERVER!!! Consider rewriting :)
 export class LectureSession extends Model {
-  static async current(transaction) {
+  // Get the active session w/ the given name
+  static async current(name, transaction) {
     let sesh = await LectureSession.findAll(
       {
-        where: { isFinished: false },
+        where: { isFinished: false, name },
         order: [["id", "DESC"]],
       },
       { transaction }
@@ -96,6 +97,7 @@ LectureSession.init(
       autoIncrement: true,
       primaryKey: true,
     },
+    name: DataTypes.STRING,
     isFinished: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

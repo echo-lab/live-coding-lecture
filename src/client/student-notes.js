@@ -11,6 +11,7 @@ import {
   makeConsoleResizable,
   RunInteractions,
   setUpChangeEmail,
+  setupJoinLectureModal,
 } from "./shared-interactions.js";
 import {
   CLIENT_TYPE,
@@ -62,23 +63,15 @@ const PLAYGROUND_TAB = 1;
 // OKAY: wait until a session starts to initialize
 //////////////////////////////////////////////////////
 
-async function attemptInitialization() {
-  const response = await fetch("../current-session-notes", {
-    body: JSON.stringify({ email }),
-    ...POST_JSON_REQUEST,
-  });
-
-  let res = await response.json();
-
-  if (!res.sessionNumber) {
-    console.log("No instructor detected -- trying again in 5 seconds.");
-    setTimeout(attemptInitialization, 5000);
-    return;
-  }
-
-  let { notesDocChanges, sessionNumber, lectureDoc, lectureDocVersion } = res;
-  let playgroundDoc = res.playgroundCodeInfo.doc;
-  let playgroundDocVersion = res.playgroundCodeInfo.docVersion;
+async function initialize({
+  notesDocChanges,
+  sessionNumber,
+  lectureDoc,
+  lectureDocVersion,
+  playgroundCodeInfo,
+}) {
+  let playgroundDoc = playgroundCodeInfo.doc;
+  let playgroundDocVersion = playgroundCodeInfo.docVersion;
   let sessionActive = true;
 
   let notesEditor = new NotesEditor({
@@ -93,7 +86,8 @@ async function attemptInitialization() {
     lectureDoc,
     lectureDocVersion,
     socket,
-    notesEditor.createAnchor.bind(notesEditor, "instructor.py")
+    notesEditor.createAnchor.bind(notesEditor, "instructor.py"),
+    sessionNumber
   );
 
   let playgroundEditor = new StudentCodeEditor({
@@ -238,4 +232,9 @@ async function attemptInitialization() {
     sessionActive = false;
   });
 }
-attemptInitialization();
+
+setupJoinLectureModal({
+  url: "/current-session-notes",
+  email,
+  onSuccess: initialize,
+});

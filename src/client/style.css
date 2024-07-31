@@ -159,7 +159,7 @@ h2 {
 
 .code-tab {
   padding: 5px;
-  padding-left:10px;
+  padding-left: 10px;
   padding-right: 10px;
   border-color: lightgrey;
   border-width: 1px;
@@ -342,6 +342,7 @@ pre {
   grid-template-columns: 300px auto 300px;
   grid-template-rows: 100%;
   grid-template-areas: "left-section run-button email";
+  align-items: center;
 }
 
 .run-button-grid {
@@ -383,4 +384,42 @@ pre {
 #change-email {
   font-size: small;
   /* vertical-align: middle; */
+}
+
+.modal-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(50, 50, 50, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000000;
+}
+
+.modal {
+  font-size: large;
+  width: 400px;
+  padding: 50px;
+  height: auto;
+  border: solid 1px grey;
+  border-radius: 50px;
+  background-color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.modal div {
+  margin: 5px;
+}
+
+#load-session-error {
+  color: red;
+}
+
+.modal button {
+  margin-top: 10px;
+  border: solid 1px black;
 }

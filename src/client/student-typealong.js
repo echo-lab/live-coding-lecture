@@ -11,8 +11,13 @@ import {
   makeConsoleResizable,
   RunInteractions,
   setUpChangeEmail,
+  setupJoinLectureModal,
 } from "./shared-interactions.js";
-import { CLIENT_TYPE, SOCKET_MESSAGE_TYPE, USER_ACTIONS } from "../shared-constants.js";
+import {
+  CLIENT_TYPE,
+  SOCKET_MESSAGE_TYPE,
+  USER_ACTIONS,
+} from "../shared-constants.js";
 
 const TAB_NAMES = ["notes.py", "notes2.py", "notes3.py"];
 const codeContainers = ["", "2", "3"].map((n) =>
@@ -44,22 +49,7 @@ setUpChangeEmail(changeEmailLink);
 ///////////////////////////
 
 // Wait to join a session.
-async function attemptInitialization() {
-  // TODO: actually use a different endpoint just to get the changes this student made!
-  const response = await fetch("/current-session-typealong", {
-    body: JSON.stringify({ email }),
-    ...POST_JSON_REQUEST,
-  });
-
-  let res = await response.json();
-  if (!res.sessionNumber) {
-    console.log("No instructor detected -- trying again in 5 seconds.");
-    setTimeout(attemptInitialization, 5000);
-    return;
-  }
-
-  let { docs, sessionNumber } = res;
-
+async function initialize({ docs, sessionNumber }) {
   let currentTab = 0;
   let codeEditors = TAB_NAMES.map((fileName, idx) => {
     let { doc, docVersion } = docs[fileName] || {
@@ -158,4 +148,8 @@ async function attemptInitialization() {
   });
 }
 
-attemptInitialization();
+setupJoinLectureModal({
+  url: "/current-session-typealong",
+  email,
+  onSuccess: initialize,
+});

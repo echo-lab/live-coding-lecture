@@ -13,12 +13,19 @@ app.use(express.json());
 
 let instructorChangeBuffer = new ChangeBuffer(5000, db);
 
-// Get or create the current session
-app.post("/current-session", async (req, res) => {
+// Get or create a lecture session
+app.post("/lecture-session", async (req, res) => {
+  let sessionName = req.body?.sessionName;
   try {
     let response = await db.transaction(async (t) => {
-      let sesh = await LectureSession.current(t);
-      sesh = sesh || (await LectureSession.create({}, { transaction: t }));
+      let sesh = await LectureSession.current(sessionName, t);
+      sesh =
+        sesh ||
+        (await LectureSession.create(
+          { name: sessionName },
+          { transaction: t }
+        ));
+
       await instructorChangeBuffer.flush(t);
       let { doc, docVersion } = await sesh.getDoc(t);
       return { doc: doc.toJSON(), docVersion, sessionNumber: sesh.id };
@@ -30,24 +37,9 @@ app.post("/current-session", async (req, res) => {
   }
 });
 
-app.get("/current-session", async (req, res) => {
-  try {
-    let response = await db.transaction(async (t) => {
-      let sesh = await LectureSession.current(t);
-      if (!sesh) return {};
-      await instructorChangeBuffer.flush(t);
-      let { doc, docVersion } = await sesh.getDoc(t);
-      return { doc: doc.toJSON(), docVersion, sessionNumber: sesh.id };
-    });
-    res.json(response);
-  } catch (error) {
-    console.error("Error getting or creating new lecture:", error);
-    res.json({ error: error.message });
-  }
-});
-
-app.get("/instructor-changes/:docversion", async (req, res) => {
-  let docVersion = parseInt(req.params.docversion);
+app.get("/instructor-changes/:sessionId/:docversion", async (req, res) => {
+  let sessionId = parseInt(req.params?.sessionId);
+  let docVersion = parseInt(req.params?.docversion);
   if (isNaN(docVersion) || docVersion < 0) {
     res.json({ error: `invalid doc version: ${req.params.docversion}` });
     return;
@@ -55,8 +47,8 @@ app.get("/instructor-changes/:docversion", async (req, res) => {
 
   try {
     let response = await db.transaction(async (t) => {
-      let sesh = await LectureSession.current(t);
-      if (!sesh) return { error: "no session" };
+      let sesh = await LectureSession.findByPk(sessionId, { transaction });
+      if (!sesh) return { error: `Session w/ id=${sessionId} not found` };
       return { changes: await sesh.changesSinceVersion(docVersion, t) };
     });
     res.json(response);
@@ -74,6 +66,7 @@ app.get("/instructor-changes/:docversion", async (req, res) => {
 //   4) the session Number
 app.post("/current-session-notes", async (req, res) => {
   let email = req.body?.email;
+  let sessionName = req.body?.sessionName;
   if (!email) {
     res.json({ error: "no email received" });
     return;
@@ -81,7 +74,7 @@ app.post("/current-session-notes", async (req, res) => {
 
   try {
     let response = await db.transaction(async (t) => {
-      let lecture = await LectureSession.current(t);
+      let lecture = await LectureSession.current(sessionName, t);
       if (!lecture) return {};
       let notesSession = await lecture.getNotesSessions(
         { where: { email } },
@@ -146,6 +139,7 @@ app.post("/record-notes-changes", async (req, res) => {
 
 app.post("/current-session-typealong", async (req, res) => {
   let email = req.body?.email;
+  let sessionName = req.body?.sessionName;
   if (!email) {
     res.json({ error: "no email received" });
     return;
@@ -153,7 +147,7 @@ app.post("/current-session-typealong", async (req, res) => {
 
   try {
     let response = await db.transaction(async (t) => {
-      let lecture = await LectureSession.current(t);
+      let lecture = await LectureSession.current(sessionName, t);
       if (!lecture) return {};
 
       let typealongSessions = await lecture.getTypealongSessions(

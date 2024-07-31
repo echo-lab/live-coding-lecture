@@ -165,3 +165,33 @@ export function setUpChangeEmail(el) {
     window.location.reload();
   });
 }
+
+export function setupJoinLectureModal({ url, email, onSuccess }) {
+  let sessionNameInput = document.querySelector(".modal input");
+  let fetchSessionbutton = document.querySelector("#fetch-session");
+  let errorMessage = document.querySelector("#load-session-error");
+  let modal = document.querySelector(".modal-background");
+  let sessionNameDisplay = document.querySelector(".topbar-left");
+
+  const try_connecting = async () => {
+    let sessionName = sessionNameInput.value;
+    const response = await fetch(url, {
+      body: JSON.stringify({ email, sessionName }),
+      ...POST_JSON_REQUEST,
+    });
+    let res = await response.json();
+    if (!res.sessionNumber) {
+      errorMessage.textContent = `Session "${sessionName}" does not exist. Please try again.`;
+    } else {
+      modal.style.display = "none";
+      sessionNameDisplay.innerText = `Session: ${sessionName}`;
+      onSuccess(res);
+    }
+  };
+
+  fetchSessionbutton.addEventListener("click", try_connecting);
+  sessionNameInput.addEventListener("keypress", (ev) => {
+    ev.key === "Enter" && try_connecting();
+  });
+  sessionNameInput.focus();
+}
