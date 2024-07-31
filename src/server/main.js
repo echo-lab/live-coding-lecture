@@ -63,7 +63,7 @@ app.post("/lecture-session", async (req, res) => {
 });
 
 app.get("/instructor-changes/:sessionId/:docversion", async (req, res) => {
-  let sessionId = parseInt(req.params?.sessionId);
+  let sessionId = req.params?.sessionId;
   let docVersion = parseInt(req.params?.docversion);
   if (isNaN(docVersion) || docVersion < 0) {
     res.json({ error: `invalid doc version: ${req.params.docversion}` });
@@ -71,8 +71,17 @@ app.get("/instructor-changes/:sessionId/:docversion", async (req, res) => {
   }
 
   try {
+    await db.transaction(async (t) => {
+      await instructorChangeBuffer.flush(t);
+    });
+  } catch (error) {
+    console.error("Error flushing changes:", error);
+    res.json({ error: error.message });
+  }
+
+  try {
     let response = await db.transaction(async (t) => {
-      let sesh = await LectureSession.findByPk(sessionId, { transaction });
+      let sesh = await LectureSession.findByPk(sessionId, { transaction: t });
       if (!sesh) return { error: `Session w/ id=${sessionId} not found` };
       return { changes: await sesh.changesSinceVersion(docVersion, t) };
     });

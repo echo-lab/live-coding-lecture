@@ -160,6 +160,7 @@ export class CodeFollowingEditor {
     });
     this.view = new EditorView({ state, parent: node });
     this.active = true;
+    this.pendingQueue = []; // if we fall behind, buffer instructor edits.
 
     socket.on(
       SOCKET_MESSAGE_TYPE.INSTRUCTOR_EDIT,
@@ -183,24 +184,48 @@ export class CodeFollowingEditor {
     });
   }
 
-  // FIXME: Think about the actual failure modes, given socket io is guaranteed in-order (w/ possible drops).
   async handleInstructorEdit({ changes, id }) {
-    changes = ChangeSet.fromJSON(changes);
+    if (!this.active) return;
+
+    // ONLY FOR TESTING!
+    // if (id === 3) {
+    //   return;
+    // }
+
     if (id !== this.docVersion) {
-      // FIXME: think about what else to do here...
+      console.log(`Got id=${id} but on version ${this.docVersion}`);
+      this.pendingQueue.push({ changes, id }); // Stash it so we don't lose it.
+      if (this.catchupPending) return; // Don't hammer the server if we're already trying to catch up
+      this.catchupPending = true;
       await this.catchUpOnChanges();
-      if (id !== this.docVersion) {
-        console.warn(
-          `Failed to catch up on changes: at ${this.docVersion} of ${id}`
+      this.catchupPending = false;
+
+      if (id > this.docVersion) {
+        console.warn("failed to catch up on changes! Should reload...");
+        alert(
+          "Error: Failed to sync with instructor. Please reload the page to sync."
         );
+        this.active = false;
       }
+
+      this.view.dispatch({
+        effects: setInstructorSelection.of({ anchor: 0, head: 0 }),
+      });
+      this.pendingQueue.forEach(({ changes, id }) => {
+        if (id !== this.docVersion) return;
+        console.log("Catching up on change: ", id);
+        this.docVersion++;
+        this.view.dispatch({ changes: ChangeSet.fromJSON(changes) });
+      });
+      this.pendingQueue = [];
+      return;
     }
-    if (id === this.docVersion) {
-      // console.log("Normal dispatch for change: ", id);
-      // We're good now!
-      this.docVersion++;
-      this.view.dispatch({ changes });
-    }
+
+    // console.log("Normal dispatch for change: ", id);
+    // We're good now!
+    changes = ChangeSet.fromJSON(changes);
+    this.docVersion++;
+    this.view.dispatch({ changes });
   }
 
   async catchUpOnChanges() {
@@ -208,6 +233,10 @@ export class CodeFollowingEditor {
       `/instructor-changes/${this.sessionId}/${this.docVersion}`,
       GET_JSON_REQUEST
     );
+    // // ONLY FOR TESTING
+    // let twoSeconds = new Promise((resolve) => setTimeout(resolve, 2000));
+    // await twoSeconds;
+
     let res = await response.json();
     if (!res.changes) return;
 
