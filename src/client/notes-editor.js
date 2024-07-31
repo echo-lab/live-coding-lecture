@@ -20,6 +20,7 @@ export class NotesEditor {
     this.sessionNumber = sessionNumber;
     this.active = true;
     this.email = email;
+    this.lastSyncTime = Date.now();
 
     this.quill = new Quill(nodeId, {
       modules: {
@@ -146,7 +147,7 @@ export class NotesEditor {
       },
       Quill.sources.USER
     );
-    this.quill.setSelection(range.index+1, 1, Quill.sources.USER);
+    this.quill.setSelection(range.index + 1, 1, Quill.sources.USER);
     this.quill.scrollSelectionIntoView();
   }
 
@@ -177,17 +178,21 @@ export class NotesEditor {
     const res = await response.json();
 
     if (res.error) {
-      console.warn("ACK! could not flush to server...?");
-    } else {
-      this.serverVersionNum = res.committedVersion;
-      this.queuedDeltas = this.queuedDeltas.filter(
-        (d) => d.changeNumber >= this.serverVersionNum
-      );
-      if (this.queuedDeltas.length > 0) {
-        console.warn("queued changes is not empty?!?");
-      } else {
-        console.log("Successfully flushed changes!");
+      console.warn("Could not flush changes to server: ", res.error);
+      if (Date.now() > this.lastSyncTime + 30 * 1000 && !this.alreadyAlerted) {
+        this.alreadyAlerted = true;
+        alert(
+          "Warning: changes not syncing with the server. \n" +
+            "You may want to consider copying your notes and refreshing the page."
+        );
       }
+      return;
     }
+
+    this.serverVersionNum = res.committedVersion;
+    this.queuedDeltas = this.queuedDeltas.filter(
+      (d) => d.changeNumber >= this.serverVersionNum
+    );
+    this.lastSyncTime = Date.now();
   }
 }

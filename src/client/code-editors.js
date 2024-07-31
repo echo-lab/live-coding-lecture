@@ -45,6 +45,7 @@ export class StudentCodeEditor {
     this.sessionNumber = sessionNumber;
     this.flushUrl = flushUrl;
     this.fileName = fileName;
+    this.mostRecentSync = Date.now();
 
     let snapshotExtensions = onNewSnapshot
       ? codeSnapshotFields(onNewSnapshot)
@@ -122,7 +123,17 @@ export class StudentCodeEditor {
     });
     let res = await response.json();
     if (res.error) {
-      console.log("ACK, AN ERROR!");
+      console.warn("Failed to flush changes: ", res.error);
+      if (
+        Date.now() > this.mostRecentSync + 30 * 1000 &&
+        !this.alreadyAlerted
+      ) {
+        this.alreadyAlerted = true;
+        alert(
+          "Warning: code changes not syncing with the server. \n" +
+            "You may want to consider copying your code and refreshing the page."
+        );
+      }
       return;
     }
     // Now we know server is synced up to change X so we can delete earlier things...
@@ -130,11 +141,7 @@ export class StudentCodeEditor {
     this.queuedChanges = this.queuedChanges.filter(
       (ch) => ch.changeNumber >= this.serverDocVersion
     );
-    if (this.queuedChanges.length > 0) {
-      console.warn("queued changes is not empty???");
-    } else {
-      console.log("Successfully flushed changes!");
-    }
+    this.mostRecentSync = Date.now();
   }
 }
 
