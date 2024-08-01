@@ -1,18 +1,14 @@
 import "./style.css";
 import "./style-notes.css";
+import "./style-review.css";
 
 import { GET_JSON_REQUEST } from "./utils.js";
 
 import { ReviewCodeEditor } from "./code-editors.js";
-import { makeConsoleResizable } from "./shared-interactions.js";
 import { ReadOnlyNotesEditor } from "./notes-editor.js";
 
 const codeContainer = document.querySelector(".code-container");
 const codeTabName = document.querySelector(".code-tab-text");
-
-const codeOutputsContainer = document.querySelector("#output-container");
-const consoleResizer = document.querySelector("#resize-console");
-makeConsoleResizable(codeOutputsContainer, consoleResizer, true);
 
 const NOTES_CONTAINER_ID = "#notes-document";
 const notesContainer = document.querySelector(NOTES_CONTAINER_ID);

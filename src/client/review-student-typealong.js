@@ -1,11 +1,11 @@
 import "./style.css";
+import "./style-review.css";
 
 import { GET_JSON_REQUEST } from "./utils.js";
 
 import { ReviewCodeEditor } from "./code-editors.js";
 
 import { Text } from "@codemirror/state";
-import { makeConsoleResizable } from "./shared-interactions.js";
 
 const TAB_NAMES = ["notes.py", "notes2.py", "notes3.py"];
 const codeContainers = ["", "2", "3"].map((n) =>
@@ -17,13 +17,8 @@ const codeTabButtons = ["#tab1", "#tab2", "#tab3"].map((s) =>
 let highestTabIdx = 0;
 let curTab = 0;
 
-const consoleResizer = document.querySelector("#resize-console");
-const codeOutputsContainer = document.querySelector("#output-container");
-makeConsoleResizable(codeOutputsContainer, consoleResizer);
-
 // Wait to join a session.
 async function initialize({ docs, typealongSessionId }) {
-  console.log("received: ", docs);
   let codeEditors = TAB_NAMES.map((fileName, idx) => {
     let { doc, docVersion } = docs[fileName] || {
       doc: Text.empty.toJSON(),
