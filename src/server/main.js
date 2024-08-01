@@ -24,7 +24,7 @@ let flushInstructorChanges = async () => {
   }
 };
 
-// Return a list of all the sessions
+// Return a list of all the lectures.
 app.get("/lecture-sessions", async (req, res) => {
   try {
     let response = await db.transaction(async (t) => {
@@ -45,6 +45,46 @@ app.get("/lecture-sessions", async (req, res) => {
     res.json(response);
   } catch (error) {
     console.error("Error fetching all sessions:", error);
+    res.json({ error: error.message });
+  }
+});
+
+// Returns all the student sessions associated w/ a lecture.
+app.get("/session-details", async (req, res) => {
+  const id = req.query.id;
+  try {
+    let response = await db.transaction(async (t) => {
+      const sesh = await LectureSession.findByPk(id, { transaction: t });
+      console.log("sesh: ", sesh);
+      let typealongSessions = await sesh.getTypealongSessions(
+        {},
+        { transaction: t }
+      );
+      let notesSessions = await sesh.getNotesSessions({}, { transaction: t });
+
+      typealongSessions = typealongSessions.map(({ id, email }) => ({
+        email,
+        condition: "typealong",
+        studentUrl: `/pages/review-typealong?id=${id}`,
+        instructorUrl: `/pages/analysis/typealong?id=${id}`,
+      }));
+      notesSessions = notesSessions.map(({ id, email }) => ({
+        email,
+        condition: "notes",
+        studentUrl: `/pages/review-notes?id=${id}`,
+        instructorUrl: `/pages/analysis/notes?id=${id}`,
+      }));
+
+      return {
+        sessions: [...typealongSessions, ...notesSessions],
+        lectureId: sesh.id,
+        lectureName: sesh.name,
+        lectureStatus: sesh.isFinished ? "CLOSED" : "OPEN",
+      };
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Error:", error);
     res.json({ error: error.message });
   }
 });
