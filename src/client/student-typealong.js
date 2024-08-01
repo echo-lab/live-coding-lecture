@@ -44,10 +44,6 @@ const email = getEmail();
 studentDetailsContainer.textContent = `Your email: ${email}`;
 setUpChangeEmail(changeEmailLink);
 
-///////////////////////////
-// Join/await a session! //
-///////////////////////////
-
 // Wait to join a session.
 async function initialize({ docs, sessionNumber, typealongSessionId }) {
   let currentTab = 0;

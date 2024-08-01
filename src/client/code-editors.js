@@ -338,3 +338,32 @@ export class InstructorCodeEditor {
     }
   }
 }
+
+export class ReviewCodeEditor {
+  constructor({ node, doc }) {
+    let state = EditorState.create({
+      doc: Text.of(doc),
+      extensions: [
+        ...basicExtensions,
+        EditorView.editable.of(false),
+        capLength,
+      ],
+    });
+
+    this.view = new EditorView({ state, parent: node });
+  }
+
+  currentCode() {
+    return this.view.state.doc.toString();
+  }
+
+  replaceContents(newCode) {
+    this.view.dispatch({
+      changes: {
+        from: 0,
+        to: this.view.state.doc.length,
+        insert: newCode,
+      },
+    });
+  }
+}

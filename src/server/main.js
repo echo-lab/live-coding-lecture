@@ -4,7 +4,7 @@ import ViteExpress from "vite-express";
 import * as http from "http";
 import { Server } from "socket.io";
 import { db } from "./database.js";
-import { LectureSession } from "./models.js";
+import { LectureSession, TypealongSession } from "./models.js";
 import { CLIENT_TYPE, SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
 import { ChangeBuffer } from "./change-buffer.js";
 
@@ -55,7 +55,6 @@ app.get("/session-details", async (req, res) => {
   try {
     let response = await db.transaction(async (t) => {
       const sesh = await LectureSession.findByPk(id, { transaction: t });
-      console.log("sesh: ", sesh);
       let typealongSessions = await sesh.getTypealongSessions(
         {},
         { transaction: t }
@@ -65,8 +64,8 @@ app.get("/session-details", async (req, res) => {
       typealongSessions = typealongSessions.map(({ id, email }) => ({
         email,
         condition: "typealong",
-        studentUrl: `/pages/review-typealong?id=${id}`,
-        instructorUrl: `/pages/analysis/typealong?id=${id}`,
+        studentUrl: `/pages/review-typealong.html?id=${id}`,
+        instructorUrl: `/pages/analysis/typealong.html?id=${id}`,
       }));
       notesSessions = notesSessions.map(({ id, email }) => ({
         email,
@@ -215,6 +214,27 @@ app.post("/record-notes-changes", async (req, res) => {
     res.json(response);
   } catch (error) {
     console.error("Failed to record notes change: ", error);
+    return { error: error.message };
+  }
+});
+
+app.get("/typealong-session", async (req, res) => {
+  const id = req.query?.id;
+  if (!id) {
+    return res.json({ error: "No id provided" });
+  }
+
+  try {
+    let response = await db.transaction(async (t) => {
+      let sesh = await TypealongSession.findByPk(id, { transaction: t });
+      return {
+        typealongSessionId: id,
+        docs: await sesh.getCurrentDocs(t),
+      };
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Failed to retrieve typealong session", error);
     return { error: error.message };
   }
 });
