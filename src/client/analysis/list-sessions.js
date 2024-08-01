@@ -10,7 +10,7 @@ function initialize({ sessions }) {
 
     let idTd = document.createElement("td");
     let idA = document.createElement("a");
-    idA.href = `/pages/session.html?id=${id}`;
+    idA.href = `/pages/analysis/session.html?id=${id}`;
     idA.innerText = id;
     idTd.appendChild(idA);
     tr.appendChild(idTd);

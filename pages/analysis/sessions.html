@@ -8,21 +8,16 @@
   </head>
   <body class="list-sessions">
     <div id="app">
-      <h1>Session</h1>
-      <div id="session-info"></div>
-      <table>
+      <h1>Sessions</h1>
+      <table id="table-of-sessions">
         <tr>
-          <th>Participant</th>
-          <th>Condition</th>
-          <th>Student Link</th>
-          <th>Analysis Link</th>
+            <th>ID</th>
+            <th>Session Name</th>
+            <th>Start time</th>
+            <th>Status</th>
         </tr>
       </table>
     </div>
-    <script
-      type="module"
-      src="/src/client/dashboards/session-details.js"
-    ></script>
-    <!-- <script type="module" src="/src/client/dashboards/list-sessions.js"></script> -->
+    <script type="module" src="/src/client/analysis/list-sessions.js"></script>
   </body>
 </html>
