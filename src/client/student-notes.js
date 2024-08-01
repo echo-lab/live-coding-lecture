@@ -69,6 +69,7 @@ async function initialize({
   lectureDoc,
   lectureDocVersion,
   playgroundCodeInfo,
+  notesSessionId,
 }) {
   let playgroundDoc = playgroundCodeInfo.doc;
   let playgroundDocVersion = playgroundCodeInfo.docVersion;

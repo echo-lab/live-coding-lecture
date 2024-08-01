@@ -112,7 +112,7 @@ app.post("/current-session-notes", async (req, res) => {
     return;
   }
 
-  flushInstructorChanges();
+  await flushInstructorChanges();
 
   try {
     let response = await db.transaction(async (t) => {
@@ -139,6 +139,7 @@ app.post("/current-session-notes", async (req, res) => {
         sessionNumber: lecture.id,
         lectureDoc,
         lectureDocVersion,
+        notesSessionId: sesh.id,
       };
     });
     res.json(response);
@@ -204,6 +205,7 @@ app.post("/current-session-typealong", async (req, res) => {
           : await lecture.createTypealongSession({ email }, { transaction: t });
       return {
         sessionNumber: lecture.id,
+        typealongSessionId: sesh.id,
         docs: await sesh.getCurrentDocs(t),
       };
     });
@@ -294,6 +296,7 @@ async function recordBatchCodeChanges(req, res, isTypealong) {
       });
       if (!lecture) throw new Error(`Couldn't find session #${sessionNumber}`);
 
+      // TODO: we should just pass the pk, but eh.
       let sesh = isTypealong
         ? await lecture.getTypealongSessions(
             { where: { email } },

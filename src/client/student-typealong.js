@@ -49,7 +49,7 @@ setUpChangeEmail(changeEmailLink);
 ///////////////////////////
 
 // Wait to join a session.
-async function initialize({ docs, sessionNumber }) {
+async function initialize({ docs, sessionNumber, typealongSessionId }) {
   let currentTab = 0;
   let codeEditors = TAB_NAMES.map((fileName, idx) => {
     let { doc, docVersion } = docs[fileName] || {

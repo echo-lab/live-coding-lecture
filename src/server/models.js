@@ -193,6 +193,12 @@ export class TypealongSession extends Model {
 
 TypealongSession.init(
   {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      allowNull: false,
+      primaryKey: true,
+    },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -288,6 +294,12 @@ export class NotesSession extends Model {
 
 NotesSession.init(
   {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      allowNull: false,
+      primaryKey: true,
+    },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
