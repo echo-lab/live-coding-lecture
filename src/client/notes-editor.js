@@ -196,3 +196,35 @@ export class NotesEditor {
     this.lastSyncTime = Date.now();
   }
 }
+
+export class ReadOnlyNotesEditor {
+  constructor({ nodeId, deltas }) {
+    this.quill = new Quill(nodeId, {
+      readOnly: true,
+      modules: {
+        clipboard: {
+          matchers: [[".code-snapshot", (node, delta) => delta]],
+        },
+        toolbar: null,
+      },
+      placeholder: "Your notes here...",
+      theme: "snow", // or 'bubble'
+    });
+
+    // Calculate the new document
+    let doc = new Delta([{ insert: "\n" }]);
+    deltas
+      .map(({ change }) => new Delta(JSON.parse(change)))
+      .forEach((change) => {
+        doc = doc.compose(change);
+      });
+    this.quill.setContents(doc, Quill.sources.SILENT);
+
+    // If we click on a code snapshot, select it and scroll to it.
+    this.quill.root.addEventListener("click", (ev) => {
+      let snapshot = Quill.find(ev.target, true);
+      if (!(snapshot instanceof CodeSnapshotBlot)) return;
+      this.quill.setSelection(snapshot.offset(this.quill.scroll), 1, "user");
+    });
+  }
+}

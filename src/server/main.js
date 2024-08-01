@@ -4,7 +4,7 @@ import ViteExpress from "vite-express";
 import * as http from "http";
 import { Server } from "socket.io";
 import { db } from "./database.js";
-import { LectureSession, TypealongSession } from "./models.js";
+import { LectureSession, NotesSession, TypealongSession } from "./models.js";
 import { CLIENT_TYPE, SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
 import { ChangeBuffer } from "./change-buffer.js";
 
@@ -70,8 +70,8 @@ app.get("/session-details", async (req, res) => {
       notesSessions = notesSessions.map(({ id, email }) => ({
         email,
         condition: "notes",
-        studentUrl: `/pages/review-notes?id=${id}`,
-        instructorUrl: `/pages/analysis/notes?id=${id}`,
+        studentUrl: `/pages/review-notes.html?id=${id}`,
+        instructorUrl: `/pages/analysis/notes.html?id=${id}`,
       }));
 
       return {
@@ -134,6 +134,26 @@ app.get("/instructor-changes/:sessionId/:docversion", async (req, res) => {
   } catch (error) {
     console.error("Error retrieving changes: ", error);
     res.json({ error: error.message });
+  }
+});
+
+app.get("/notes-session", async (req, res) => {
+  const id = req.query?.id;
+  if (!id) return res.json({ error: "No id provided" });
+
+  try {
+    let response = await db.transaction(async (t) => {
+      let sesh = await NotesSession.findByPk(id, { transaction: t });
+      let notesDocChanges = await sesh.getDeltas(t);
+      return {
+        notesDocChanges,
+        notesSessionId: sesh.id,
+      };
+    });
+    res.json(response);
+  } catch (error) {
+    console.error("Failed to retrieve notes session", error);
+    return { error: error.message };
   }
 });
 

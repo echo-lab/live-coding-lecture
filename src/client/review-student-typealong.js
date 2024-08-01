@@ -1,8 +1,8 @@
 import "./style.css";
 
-import { GET_JSON_REQUEST, POST_JSON_REQUEST } from "./utils.js";
+import { GET_JSON_REQUEST } from "./utils.js";
 
-import { ReviewCodeEditor, StudentCodeEditor } from "./code-editors.js";
+import { ReviewCodeEditor } from "./code-editors.js";
 
 import { Text } from "@codemirror/state";
 import { makeConsoleResizable } from "./shared-interactions.js";
@@ -17,8 +17,6 @@ const codeTabButtons = ["#tab1", "#tab2", "#tab3"].map((s) =>
 let highestTabIdx = 0;
 let curTab = 0;
 
-const runButtonEl = document.querySelector("#run-button");
-const outputCodeContainer = document.querySelector("#all-code-outputs");
 const consoleResizer = document.querySelector("#resize-console");
 const codeOutputsContainer = document.querySelector("#output-container");
 makeConsoleResizable(codeOutputsContainer, consoleResizer);
@@ -70,7 +68,6 @@ async function initialize({ docs, typealongSessionId }) {
 }
 
 async function fetchData() {
-  console.log("FETCHING DATA");
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get("id");
 
