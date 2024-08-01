@@ -136,6 +136,7 @@ export class StudentCodeEditor {
       }
       return;
     }
+    console.log("Successfully flushed pending changes!");
     // Now we know server is synced up to change X so we can delete earlier things...
     this.serverDocVersion = res.committedVersion;
     this.queuedChanges = this.queuedChanges.filter(
