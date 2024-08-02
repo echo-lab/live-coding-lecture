@@ -68,7 +68,7 @@ async function flushChangesToSession(sessionId, changeQueue, transaction) {
   for (let { id, changes, ts } of changeQueue) {
     if (id !== docVersion) {
       return {
-        error: new Error(`Expected change #${docVersion} but got #${id}`),
+        error: new Error(`Expected instructor change #${docVersion} but got #${id}`),
       };
     }
 

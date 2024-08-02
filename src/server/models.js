@@ -172,7 +172,7 @@ export class TypealongSession extends Model {
 
       if (changeNumber !== fileToVersion[fileName]) {
         console.warn(
-          `Expected change #${fileToVersion[fileName]} but got #${changeNumber}`
+          `Expected typealong change #${fileToVersion[fileName]} but got #${changeNumber}`
         );
         return;
       }
@@ -274,7 +274,7 @@ export class NotesSession extends Model {
     for (let { changeNumber, changesetJSON, ts } of changes) {
       if (changeNumber !== currentVersion) {
         console.warn(
-          `Expected change #${currentVersion}; got #${changeNumber}`
+          `Expected playground code change #${currentVersion}; got #${changeNumber}`
         );
         return;
       }
