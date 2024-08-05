@@ -8,12 +8,13 @@ import {
 
 import Quill from "quill";
 import { POST_JSON_REQUEST } from "./utils.js";
+import { Recorder } from "./recorder.js";
 Quill.register(CodeSnapshotBlot);
 
 const Delta = Quill.import("delta");
 
 export class NotesEditor {
-  constructor({ nodeId, deltas, sessionNumber, email }) {
+  constructor({ nodeId, deltas, sessionNumber, email, shouldRecord = false }) {
     this.queuedDeltas = [];
     this.localVersionNum = deltas.length;
     this.serverVersionNum = deltas.length;
@@ -21,6 +22,7 @@ export class NotesEditor {
     this.active = true;
     this.email = email;
     this.lastSyncTime = Date.now();
+    this.recorder = shouldRecord ? new Recorder() : null;
 
     this.quill = new Quill(nodeId, {
       modules: {
@@ -159,11 +161,24 @@ export class NotesEditor {
       ts: Date.now(),
       changeNumber: this.localVersionNum,
     });
+    this.recorder?.record(delta);
     this.localVersionNum++;
   }
 
+  dumpRecording(name) {
+    this.recorder?.dump(name);
+  }
+
+  replayFn(delta) {
+    let doc = this.quill.getContents();
+    this.quill.setContents(doc.compose(delta), Quill.sources.USER);
+  }
+
   async flushChangesToServer() {
-    if (this.queuedDeltas.length === 0 || !this.active) return;
+    if (this.queuedDeltas.length === 0 || !this.active) {
+      this.lastSyncTime = Date.now();
+      return;
+    }
 
     let payload = {
       sessionNumber: this.sessionNumber,
@@ -188,6 +203,8 @@ export class NotesEditor {
       }
       return;
     }
+
+    console.log("Successfully flushed notes changes to server!");
 
     this.serverVersionNum = res.committedVersion;
     this.queuedDeltas = this.queuedDeltas.filter(

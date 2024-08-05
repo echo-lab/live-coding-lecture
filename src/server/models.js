@@ -164,17 +164,23 @@ export class TypealongSession extends Model {
       fileToVersion[file_name] = docVersion;
     }
 
+    // Stupid hack -- there should only be one file for all the changes.
+    let theFileName;
+
     // Should probs check more lol
     // But: we assume it's in order and that there are no gaps :P
-    // for (let ch of changes) {
     for (let { fileName, changeNumber, changesetJSON, ts } of changes) {
+      theFileName = fileName;
       if (!fileToVersion[fileName]) fileToVersion[fileName] = 0;
 
-      if (changeNumber !== fileToVersion[fileName]) {
+      if (changeNumber < fileToVersion[fileName]) {
+        console.warn(`Skipping already seen code change: #${changeNumber}`);
+        continue;
+      } else if (changeNumber > fileToVersion[fileName]) {
         console.warn(
           `Expected typealong change #${fileToVersion[fileName]} but got #${changeNumber}`
         );
-        return;
+        return fileToVersion[fileName];
       }
       await this.createTypealongChange(
         {
@@ -187,7 +193,7 @@ export class TypealongSession extends Model {
       );
       fileToVersion[fileName]++;
     }
-    return fileToVersion;
+    return fileToVersion[theFileName];
   }
 }
 
@@ -239,11 +245,15 @@ export class NotesSession extends Model {
     let currentVersion = await this.countNotesChanges({ transaction });
     // TODO: check more?
     for (let { changeNumber, delta, ts } of changes) {
-      if (changeNumber !== currentVersion) {
+      if (changeNumber < currentVersion) {
+        console.warn(`Skipping already seen notes change: #${changeNumber}`);
+        continue;
+      } else if (changeNumber > currentVersion) {
+        // Missed a change, somehow!
         console.warn(
-          `Received notes change #${changeNumber}, but was expecting ${currentVersion}`
+          `Received notes change #${changeNumber}, but expected ${currentVersion}`
         );
-        return;
+        return currentVersion;
       }
       await this.createNotesChange(
         {
@@ -272,11 +282,14 @@ export class NotesSession extends Model {
   async recordCodeChanges(changes, transaction) {
     let currentVersion = await this.countPlaygroundCodeChanges();
     for (let { changeNumber, changesetJSON, ts } of changes) {
-      if (changeNumber !== currentVersion) {
+      if (changeNumber < currentVersion) {
+        console.warn(`Skipping already seen playground change: #${changeNumber}`);
+        continue;
+      } else if (changeNumber > currentVersion) {
         console.warn(
           `Expected playground code change #${currentVersion}; got #${changeNumber}`
         );
-        return;
+        return currentVersion;
       }
       await this.createPlaygroundCodeChange(
         {

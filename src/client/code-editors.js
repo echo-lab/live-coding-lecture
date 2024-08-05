@@ -9,6 +9,7 @@ import {
 } from "./cm-extensions.js";
 import { GET_JSON_REQUEST, POST_JSON_REQUEST } from "./utils.js";
 import { SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
+import { Recorder } from "./recorder.js";
 
 const FLUSH_CHANGES_FREQ = /*seconds=*/ 3 * 1000;
 
@@ -36,16 +37,17 @@ export class StudentCodeEditor {
     email,
     flushUrl,
     onNewSnapshot = null,
+    shouldRecord = false,
   }) {
     this.email = email;
     this.docVersion = docVersion;
-    this.serverDocVersion = docVersion;
     this.sessionActive = true;
     this.queuedChanges = [];
     this.sessionNumber = sessionNumber;
     this.flushUrl = flushUrl;
     this.fileName = fileName;
     this.mostRecentSync = Date.now();
+    this.recorder = shouldRecord ? new Recorder() : null;
 
     let snapshotExtensions = onNewSnapshot
       ? codeSnapshotFields(onNewSnapshot)
@@ -89,7 +91,16 @@ export class StudentCodeEditor {
         fileName: this.fileName,
       });
       this.docVersion++;
+      this.recorder?.record(tr.changes.toJSON());
     });
+  }
+
+  dumpRecording(name) {
+    this.recorder?.dump(name);
+  }
+
+  replayFn(change) {
+    this.view.dispatch({ changes: ChangeSet.fromJSON(change) });
   }
 
   replaceContents(newCode) {
@@ -109,7 +120,10 @@ export class StudentCodeEditor {
   }
 
   async flushChanges() {
-    if (this.queuedChanges.length === 0) return;
+    if (this.queuedChanges.length === 0) {
+      this.mostRecentSync = Date.now();
+      return;
+    }
 
     // Okay, we have changes to flush!
     let payload = {
@@ -117,6 +131,9 @@ export class StudentCodeEditor {
       changes: this.queuedChanges,
       email: this.email,
     };
+    let lo = this.queuedChanges.at(0).changeNumber;
+    let hi = this.queuedChanges.at(-1).changeNumber;
+
     const response = await fetch(this.flushUrl, {
       body: JSON.stringify(payload),
       ...POST_JSON_REQUEST,
@@ -136,11 +153,12 @@ export class StudentCodeEditor {
       }
       return;
     }
-    console.log("Successfully flushed pending changes!");
     // Now we know server is synced up to change X so we can delete earlier things...
-    this.serverDocVersion = res.committedVersion;
+    let serverDocVersion = res.committedVersion;
+    console.log(`Flushed changes: (${lo}, ${hi})`);
+
     this.queuedChanges = this.queuedChanges.filter(
-      (ch) => ch.changeNumber >= this.serverDocVersion
+      (ch) => ch.changeNumber >= serverDocVersion
     );
     this.mostRecentSync = Date.now();
   }
