@@ -11,7 +11,7 @@ import { GET_JSON_REQUEST, POST_JSON_REQUEST } from "./utils.js";
 import { SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
 import { Recorder } from "./recorder.js";
 
-const FLUSH_CHANGES_FREQ = /*seconds=*/ 3 * 1000;
+const FLUSH_CHANGES_FREQ = /*seconds=*/ 5 * 1000;
 
 /*
 Flushed data in format: 

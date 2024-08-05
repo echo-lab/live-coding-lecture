@@ -21,7 +21,7 @@ import {
 import { NotesEditor } from "./notes-editor.js";
 // import { replayChanges } from "./recorder.js"; // Uncomment for stress testing
 
-const FLUSH_CHANGES_FREQ = /*seconds=*/ 3 * 1000;
+const FLUSH_CHANGES_FREQ = /*seconds=*/ 5 * 1000;
 
 const instructorCodeContainer = document.querySelector(
   "#instructor-code-container"
@@ -245,6 +245,11 @@ async function initialize({
     playgroundEditor.endSession();
     instructorEditor.stopFollowing();
     sessionActive = false;
+  });
+
+  window.addEventListener("beforeunload", (event) => {
+    notesEditor.flushChangesToServer();
+    playgroundEditor.flushChanges();
   });
 }
 

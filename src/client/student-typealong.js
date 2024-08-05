@@ -157,6 +157,10 @@ async function initialize({ docs, sessionNumber, typealongSessionId }) {
     console.log("SESSION IS ENDED!");
     codeEditors.forEach((editor) => editor.endSession());
   });
+
+  window.addEventListener("beforeunload", (event) => {
+    codeEditors.forEach((editor) => editor.flushChanges());
+  });
 }
 
 setupJoinLectureModal({
