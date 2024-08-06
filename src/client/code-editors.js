@@ -10,6 +10,8 @@ import {
 import { GET_JSON_REQUEST, POST_JSON_REQUEST } from "./utils.js";
 import { SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
 import { Recorder } from "./recorder.js";
+import { keymap } from "@codemirror/view";
+import { indentWithTab } from "@codemirror/commands";
 
 const FLUSH_CHANGES_FREQ = /*seconds=*/ 5 * 1000;
 
@@ -58,6 +60,7 @@ export class StudentCodeEditor {
       extensions: [
         ...basicExtensions,
         EditorView.updateListener.of(this.onCodeUpdate.bind(this)),
+        keymap.of([indentWithTab]),
         snapshotExtensions,
         capLength,
       ],
@@ -305,6 +308,7 @@ export class InstructorCodeEditor {
       doc: Text.of(doc),
       extensions: [
         ...basicExtensions,
+        keymap.of([indentWithTab]),
         EditorView.updateListener.of(
           this.broadcastInstructorChanges.bind(this)
         ),
