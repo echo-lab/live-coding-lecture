@@ -1,5 +1,6 @@
 import { basicSetup, EditorView } from "codemirror";
 import { EditorState, StateEffect, StateField, Facet } from "@codemirror/state";
+import { indentUnit } from "@codemirror/language";
 import { python } from "@codemirror/lang-python";
 
 import { showTooltip, Decoration, WidgetType } from "@codemirror/view";
@@ -221,7 +222,7 @@ const instructorCursorWidget = Decoration.widget({
 export const basicExtensions = [
   basicSetup,
   python(),
-  EditorState.tabSize.of(2),
+  indentUnit.of("    "),
 ];
 
 export const followInstructorExtensions = [
