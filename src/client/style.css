@@ -47,6 +47,10 @@ h1 {
   /* text-align: center; */
 }
 
+.landing-page #app {
+  margin: 40px 100px;
+}
+
 button {
   border-radius: 8px;
   border: 1px solid transparent;

@@ -1,20 +1,27 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Live Coding Lecture</title>
   </head>
-  <body>
+  <body class="landing-page">
     <div id="app">
-      <h2>Live Coding Lecture</h2>
+      <h2>Live Coding Lecture Study</h2>
       <div class="parent-container">
+        <div>
+          <span id="student-email"></span>
+          <a href="#" id="change-email" hidden>(change)</a>
+        </div>
         <ul>
-          <li> <a href="/pages/student-typealong.html">Type-along Interface</a> </li>
-          <li> <a href="/pages/student-notes.html">Note-taking Interface</a> </li>
+          <li>
+            <a href="/pages/student-typealong.html" target="_blank">Typealong Interface (A)</a>
+          </li>
+          <li><a href="/pages/student-notes.html" target="_blank">Notes-doc Interface (B)</a></li>
         </ul>
       </div>
     </div>
+    <script type="module" src="/src/client/landing-page.js"></script>
   </body>
 </html>

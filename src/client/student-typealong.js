@@ -42,7 +42,7 @@ makeConsoleResizable(codeOutputsContainer, consoleResizer);
 const socket = io();
 
 const email = getEmail();
-studentDetailsContainer.textContent = `Your email: ${email}`;
+studentDetailsContainer.textContent = email;
 setUpChangeEmail(changeEmailLink);
 
 // Wait to join a session.

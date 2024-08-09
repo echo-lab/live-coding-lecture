@@ -45,7 +45,7 @@ const notesContainer = document.querySelector(NOTES_CONTAINER_ID);
 const email = getEmail();
 const studentDetailsContainer = document.querySelector("#student-email");
 const changeEmailLink = document.querySelector("#change-email");
-studentDetailsContainer.textContent = `Your email: ${email}`;
+studentDetailsContainer.textContent = email;
 setUpChangeEmail(changeEmailLink);
 
 ////////
