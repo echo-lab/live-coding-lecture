@@ -8,11 +8,10 @@ let stderr = [];
 async function loadPyodideAndPackages() {
   self.pyodide = await loadPyodide();
   // await self.pyodide.loadPackage(["numpy", "pytz"]);
-  self.pyodide.setStderr({batched: (msg) => stderr.push(msg) });
-  self.pyodide.setStdout({batched: (msg) => stdout.push(msg) });
+  self.pyodide.setStderr({ batched: (msg) => stderr.push(msg) });
+  self.pyodide.setStdout({ batched: (msg) => stdout.push(msg) });
 }
 let pyodideReadyPromise = loadPyodideAndPackages();
-
 
 self.onmessage = async (event) => {
   // make sure loading is done
@@ -28,9 +27,14 @@ self.onmessage = async (event) => {
   //   }
 
   // Now is the easy part, the one that is similar to working in the main thread:
+  const dict = self.pyodide.globals.get("dict");
+  const globals = dict();
   try {
     await self.pyodide.loadPackagesFromImports(python);
-    let results = await self.pyodide.runPythonAsync(python);
+    let results = await self.pyodide.runPythonAsync(python, {
+      globals,
+      locals: globals,
+    });
     self.postMessage({ results, id, stdout, stderr });
   } catch (error) {
     self.postMessage({ error: error.message, id, stdout, stderr });
@@ -38,4 +42,6 @@ self.onmessage = async (event) => {
     stdout = [];
     stderr = [];
   }
+  globals.destroy();
+  dict.destroy();
 };
