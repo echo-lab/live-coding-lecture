@@ -171,7 +171,7 @@ export function setupJoinLectureModal({ url, email, onSuccess }) {
   let fetchSessionbutton = document.querySelector("#fetch-session");
   let errorMessage = document.querySelector("#load-session-error");
   let modal = document.querySelector(".modal-background");
-  let sessionNameDisplay = document.querySelector(".topbar-left");
+  let sessionNameDisplay = document.querySelector("#session-name-display");
 
   const try_connecting = async () => {
     let sessionName = sessionNameInput.value;

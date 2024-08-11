@@ -74,6 +74,13 @@ h2 {
   margin-top: 0px;
 }
 
+span.sep {
+  margin-left: 5px;
+  margin-right: 5px;
+  font-weight: bold;
+  color: white;
+}
+
 /* Styles for just the coding interfaces */
 .code-typing-interface #app {
   min-width: 700px;
