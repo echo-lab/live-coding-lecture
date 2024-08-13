@@ -3,12 +3,15 @@ export const USER_ACTIONS = Object.freeze({
   OPEN_INST_CODE_PLAYGROUND: "OPEN_INST_CODE_PLAYGROUND",
   OPEN_SNAPSHOT_PLAYGROUND: "OPEN_SNAPSHOT_PLAYGROUND",
   SWITCH_TAB: "SWITCH_TAB",
+  SUBMIT_CODE: "SUBMIT_CODE",  // For quizzes.
+  LOAD_PAGE: "LOAD_PAGE",  // For quizzes/reviewing notes.
 });
 
 export const CLIENT_TYPE = Object.freeze({
   INSTRUCTOR: "INSTRUCTOR",
   TYPEALONG: "TYPEALONG",
   NOTES: "NOTES",
+  QUIZ: "QUIZ",
 });
 
 export const SOCKET_MESSAGE_TYPE = Object.freeze({

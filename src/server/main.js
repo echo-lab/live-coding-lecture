@@ -9,7 +9,7 @@ import { CLIENT_TYPE, SOCKET_MESSAGE_TYPE } from "../shared-constants.js";
 import { ChangeBuffer } from "./change-buffer.js";
 
 const app = express();
-app.use(express.json({limit: '50mb'}));
+app.use(express.json({ limit: "50mb" }));
 
 let instructorChangeBuffer = new ChangeBuffer(5000, db);
 let flushInstructorChanges = async () => {
@@ -337,7 +337,10 @@ app.post("/record-user-action", async (req, res) => {
 
       if (source === CLIENT_TYPE.INSTRUCTOR) {
         await lecture.createInstructorAction(record, { transaction: t });
-      } else if (source === CLIENT_TYPE.TYPEALONG) {
+      } else if (
+        source === CLIENT_TYPE.TYPEALONG ||
+        source === CLIENT_TYPE.QUIZ
+      ) {
         let sesh = await lecture.getTypealongSessions(
           { where: { email } },
           { transaction: t }

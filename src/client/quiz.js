@@ -22,6 +22,21 @@ const email = getEmail();
 studentDetailsContainer.textContent = email;
 setUpChangeEmail(changeEmailLink);
 
+function recordUserAction({ actionType, sessionNumber, email, sessionName }) {
+  let payload = {
+    ts: Date.now(),
+    actionType,
+    sessionNumber,
+    source: CLIENT_TYPE.QUIZ,
+    email,
+    details: sessionName,
+  };
+  fetch("/record-user-action", {
+    body: JSON.stringify(payload),
+    ...POST_JSON_REQUEST,
+  });
+}
+
 // Wait to join a session.
 async function initialize({
   docs,
@@ -57,10 +72,23 @@ async function initialize({
     Please continue to part 2 at <a href="${url}">this link.</a> 
     </div>`;
     modalContainer.style.display = "";
+    recordUserAction({
+      actionType: USER_ACTIONS.SUBMIT_CODE,
+      sessionNumber,
+      email,
+      sessionName,
+    });
   });
 
   window.addEventListener("beforeunload", (event) => {
     codeEditor.flushChanges();
+  });
+
+  recordUserAction({
+    actionType: USER_ACTIONS.LOAD_PAGE,
+    sessionNumber,
+    email,
+    sessionName,
   });
 }
 
