@@ -195,3 +195,38 @@ export function setupJoinLectureModal({ url, email, onSuccess }) {
   });
   sessionNameInput.focus();
 }
+
+// Hacky hack hack lol
+export function setupJoinQuizModal({ url, email, onSuccess }) {
+  let sessionNameInput = document.querySelector(".modal input");
+  let fetchSessionbutton = document.querySelector("#fetch-session");
+  let errorMessage = document.querySelector("#load-session-error");
+  let modal = document.querySelector(".modal-background");
+  let sessionNameDisplay = document.querySelector("#session-name-display");
+
+  const try_connecting = async () => {
+    let sessionName = sessionNameInput.value;
+    if (!["genquiz", "decoquiz"].includes(sessionName)) {
+      errorMessage.textContent = `Incorrect quiz password -- please try again.`;
+      return;
+    }
+    const response = await fetch(url, {
+      body: JSON.stringify({ email, sessionName }),
+      ...POST_JSON_REQUEST,
+    });
+    let res = await response.json();
+    if (!res.sessionNumber) {
+      errorMessage.textContent = `Incorrect quiz password -- please try again.`;
+      return;
+    }
+    modal.style.display = "none";
+    sessionNameDisplay.innerText = `Quiz ID: ${sessionName}`;
+    onSuccess({ sessionName, ...res });
+  };
+
+  fetchSessionbutton.addEventListener("click", try_connecting);
+  sessionNameInput.addEventListener("keypress", (ev) => {
+    ev.key === "Enter" && try_connecting();
+  });
+  sessionNameInput.focus();
+}

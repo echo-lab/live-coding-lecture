@@ -13,6 +13,7 @@ export default defineConfig({
         sessionDeets: resolve(__dirname, "pages/analysis/session.html"),
         reviewTypealong: resolve(__dirname, "pages/review-typealong.html"),
         reviewNotes: resolve(__dirname, "pages/review-notes.html"),
+        quiz: resolve(__dirname, "pages/quiz.html"),
       },
     },
   },

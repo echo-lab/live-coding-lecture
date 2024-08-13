@@ -1,0 +1,13 @@
+.parent-container {
+  grid-template-rows: [toolbar] 40px [code] auto;
+  grid-template-areas:
+    "code-tabs"
+    "code-display";
+}
+
+
+#submit-button {
+  background-color: #d3d3ff;
+  color: #800080;
+  font-weight: bold;
+}
