@@ -195,4 +195,6 @@
 
 .ql-editor {
   scroll-behavior: smooth;
+  border-bottom: solid 1px lightgrey;
+  border-radius: 10px;
 }
