@@ -200,7 +200,16 @@ export function setupJoinLectureModal({ url, email, onSuccess }) {
   sessionNameInput.focus();
 }
 
-// Hacky hack hack lol
+// Hacky hack hack lol !!! TODO: CHANGE
+const QUIZ_NAMES = [
+  "genquiz",
+  "decoquiz",
+  "home-gen-1",
+  "home-gen-2",
+  "home-deco-1",
+  "home-deco-2",
+];
+
 export function setupJoinQuizModal({ url, email, onSuccess }) {
   let sessionNameInput = document.querySelector(".modal input");
   let fetchSessionbutton = document.querySelector("#fetch-session");
@@ -210,7 +219,7 @@ export function setupJoinQuizModal({ url, email, onSuccess }) {
 
   const try_connecting = async () => {
     let sessionName = sessionNameInput.value;
-    if (!["genquiz", "decoquiz"].includes(sessionName)) {
+    if (!QUIZ_NAMES.includes(sessionName)) {
       errorMessage.textContent = `Incorrect quiz password -- please try again.`;
       return;
     }
@@ -227,6 +236,13 @@ export function setupJoinQuizModal({ url, email, onSuccess }) {
     sessionNameDisplay.innerText = `Quiz ID: ${sessionName}`;
     onSuccess({ sessionName, ...res });
   };
+
+  const urlParams = new URLSearchParams(window.location.search);
+  let pw = urlParams.get("pw");
+  if (pw) {
+    sessionNameInput.value = pw;
+    try_connecting();
+  }
 
   fetchSessionbutton.addEventListener("click", try_connecting);
   sessionNameInput.addEventListener("keypress", (ev) => {
