@@ -80,7 +80,7 @@ async function initialize({
     if (HOME_QUIZ_NAMES.includes(sessionName)) {
       console.log("HERE");
       let res = `<div>
-      Response recorded! Please copy your code back into the google doc:
+      Response recorded! Please copy your code back into the google form:
       <pre style="border:solid 1px black;padding:5px">${codeEditor.currentCode()}</pre>
       </div>
       `;
