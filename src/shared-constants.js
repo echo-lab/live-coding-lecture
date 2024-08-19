@@ -5,6 +5,7 @@ export const USER_ACTIONS = Object.freeze({
   SWITCH_TAB: "SWITCH_TAB",
   SUBMIT_CODE: "SUBMIT_CODE",  // For quizzes.
   LOAD_PAGE: "LOAD_PAGE",  // For quizzes/reviewing notes.
+  VISIBILITY_CHANGE: "VISIBILITY_CHANGE", // For reviewing notes only.
 });
 
 export const CLIENT_TYPE = Object.freeze({

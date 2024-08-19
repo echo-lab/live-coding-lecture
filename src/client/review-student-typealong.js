@@ -1,11 +1,12 @@
 import "./style.css";
 import "./style-review.css";
 
-import { GET_JSON_REQUEST } from "./utils.js";
+import { GET_JSON_REQUEST, POST_JSON_REQUEST } from "./utils.js";
 
 import { ReviewCodeEditor } from "./code-editors.js";
 
 import { Text } from "@codemirror/state";
+import { CLIENT_TYPE, USER_ACTIONS } from "../shared-constants.js";
 
 const TAB_NAMES = ["notes.py", "notes2.py", "notes3.py"];
 const codeContainers = ["", "2", "3"].map((n) =>
@@ -17,8 +18,23 @@ const codeTabButtons = ["#tab1", "#tab2", "#tab3"].map((s) =>
 let highestTabIdx = 0;
 let curTab = 0;
 
+function recordUserAction({ actionType, sessionNumber, email, details }) {
+  let payload = {
+    ts: Date.now(),
+    actionType,
+    sessionNumber,
+    source: CLIENT_TYPE.TYPEALONG, // reviewing notes, though....
+    email,
+    details,
+  };
+  fetch("/record-user-action", {
+    body: JSON.stringify(payload),
+    ...POST_JSON_REQUEST,
+  });
+}
+
 // Wait to join a session.
-async function initialize({ docs, typealongSessionId }) {
+async function initialize({ docs, typealongSessionId, sessionNumber, email }) {
   let codeEditors = TAB_NAMES.map((fileName, idx) => {
     let { doc, docVersion } = docs[fileName] || {
       doc: Text.empty.toJSON(),
@@ -59,6 +75,22 @@ async function initialize({ docs, typealongSessionId }) {
 
   codeTabButtons.forEach((el, idx) => {
     el.addEventListener("click", () => switchToTab(idx));
+  });
+
+  // Loaded
+  recordUserAction({
+    actionType: USER_ACTIONS.LOAD_PAGE,
+    sessionNumber,
+    email,
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    recordUserAction({
+      actionType: USER_ACTIONS.VISIBILITY_CHANGE,
+      sessionNumber,
+      email,
+      details: document.hidden ? "HIDDEN" : "VISIBLE",
+    });
   });
 }
 

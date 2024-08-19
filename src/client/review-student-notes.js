@@ -2,10 +2,11 @@ import "./style.css";
 import "./style-notes.css";
 import "./style-review.css";
 
-import { GET_JSON_REQUEST } from "./utils.js";
+import { GET_JSON_REQUEST, POST_JSON_REQUEST } from "./utils.js";
 
 import { ReviewCodeEditor } from "./code-editors.js";
 import { ReadOnlyNotesEditor } from "./notes-editor.js";
+import { CLIENT_TYPE, USER_ACTIONS } from "../shared-constants.js";
 
 const codeContainer = document.querySelector(".code-container");
 const codeTabName = document.querySelector(".code-tab-text");
@@ -13,7 +14,27 @@ const codeTabName = document.querySelector(".code-tab-text");
 const NOTES_CONTAINER_ID = "#notes-document";
 const notesContainer = document.querySelector(NOTES_CONTAINER_ID);
 
-async function initialize({ notesDocChanges, notesSessionId }) {
+function recordUserAction({ actionType, sessionNumber, email, details }) {
+  let payload = {
+    ts: Date.now(),
+    actionType,
+    sessionNumber,
+    source: CLIENT_TYPE.NOTES, // reviewing notes, though....
+    email,
+    details,
+  };
+  fetch("/record-user-action", {
+    body: JSON.stringify(payload),
+    ...POST_JSON_REQUEST,
+  });
+}
+
+async function initialize({
+  notesDocChanges,
+  notesSessionId,
+  sessionNumber,
+  email,
+}) {
   console.log("received: ", notesDocChanges);
   let notesEditor = new ReadOnlyNotesEditor({
     nodeId: NOTES_CONTAINER_ID,
@@ -40,6 +61,22 @@ async function initialize({ notesDocChanges, notesSessionId }) {
     el = el.closest(".code-snapshot");
     console.log(el);
     el && loadCode(el.dataset.fullCode, el.dataset.title);
+  });
+
+  // Loaded
+  recordUserAction({
+    actionType: USER_ACTIONS.LOAD_PAGE,
+    sessionNumber,
+    email,
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    recordUserAction({
+      actionType: USER_ACTIONS.VISIBILITY_CHANGE,
+      sessionNumber,
+      email,
+      details: document.hidden ? "HIDDEN" : "VISIBLE",
+    });
   });
 }
 

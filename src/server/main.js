@@ -148,6 +148,8 @@ app.get("/notes-session", async (req, res) => {
       return {
         notesDocChanges,
         notesSessionId: sesh.id,
+        sessionNumber: sesh.LectureSessionsId, // sad -.- [needs cleanup]
+        email: sesh.email,
       };
     });
     res.json(response);
@@ -250,6 +252,8 @@ app.get("/typealong-session", async (req, res) => {
       return {
         typealongSessionId: id,
         docs: await sesh.getCurrentDocs(t),
+        sessionNumber: sesh.LectureSessionsId, // sad -.- [needs cleanup]
+        email: sesh.email,
       };
     });
     res.json(response);
