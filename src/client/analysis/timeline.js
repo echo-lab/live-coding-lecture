@@ -3,8 +3,6 @@ import { USER_ACTIONS } from "../../shared-constants";
 
 let slider = document.querySelector("#timeline-slider");
 let info = document.querySelector(".timeline .info");
-let eventsBar = document.querySelector(".timeline .events");
-let changeBar = document.querySelector(".timeline .edits");
 // let sliderBar = document.querySelector(".timeline .bar");
 
 // // Update the current slider value (each time you drag the slider handle)
@@ -39,9 +37,16 @@ function setUpTicks(events) {
 
   updateTicks();
 
+  let counts = {};
+  Object.keys(USER_ACTIONS).forEach((t) => (counts[t] = 0));
+  for (let ev of events) {
+    ev.action_type && counts[ev.action_type]++;
+  }
+
   Object.keys(USER_ACTIONS).forEach((actionType) => {
     let checkbox = document.querySelector(`#${actionType}`);
     if (!checkbox) return;
+    checkbox.nextElementSibling.innerText += ` (${counts[actionType]})`;
     checkbox.addEventListener("change", updateTicks);
   });
 }
@@ -64,7 +69,7 @@ export function setupTimeline({
   events.sort((a, b) => a.ts - b.ts);
   let t0 = events.length > 0 ? events[0].ts : 0;
 
-  slider.max = events.length - 1;
+  slider.max = events.length;
 
   setUpTicks(events);
 
