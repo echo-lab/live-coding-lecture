@@ -213,18 +213,18 @@ TypealongSession.init(
   { sequelize }
 );
 
-LectureSession.hasMany(TypealongSession, { foreignKey: "LectureSessionsId" });
+LectureSession.hasMany(TypealongSession, { foreignKey: "LectureSessionsId" }); // Typo: should not be plural...
 TypealongSession.belongsTo(LectureSession);
 
 export class TypealongChange extends Model {}
 TypealongChange.init(CODE_CHANGE_SCHEMA, { sequelize });
 
-TypealongSession.hasMany(TypealongChange, { foreignKey: "TypealongChangeId" });
+TypealongSession.hasMany(TypealongChange, { foreignKey: "TypealongChangeId" }); // This should be TypealongSessionId lol
 TypealongChange.belongsTo(TypealongSession);
 
 export class TypealongAction extends Model {}
 TypealongAction.init(USER_ACTION_SCHEMA, { sequelize });
-TypealongSession.hasMany(TypealongAction, { foreignKey: "TypealongChangeId" });
+TypealongSession.hasMany(TypealongAction, { foreignKey: "TypealongChangeId" }); // This is an error lol -- foreignKey should be TypealongSessionId...
 TypealongAction.belongsTo(TypealongSession);
 
 export class NotesSession extends Model {

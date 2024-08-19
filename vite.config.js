@@ -14,6 +14,7 @@ export default defineConfig({
         reviewTypealong: resolve(__dirname, "pages/review-typealong.html"),
         reviewNotes: resolve(__dirname, "pages/review-notes.html"),
         quiz: resolve(__dirname, "pages/quiz.html"),
+        replayTypealong: resolve(__dirname, "pages/analysis/typealong.html"),
       },
     },
   },

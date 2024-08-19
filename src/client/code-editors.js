@@ -363,12 +363,12 @@ export class InstructorCodeEditor {
 }
 
 export class ReviewCodeEditor {
-  constructor({ node, doc }) {
+  constructor({ node, doc, isEditable = false }) {
     let state = EditorState.create({
       doc: Text.of(doc),
       extensions: [
         ...basicExtensions,
-        EditorView.editable.of(false),
+        EditorView.editable.of(isEditable),
         capLength,
       ],
     });

@@ -13,10 +13,12 @@ export class RunInteractions {
     sessionNumber,
     source,
     email,
+    logRuns = true,
     broadcastResult = () => {},
   }) {
     this.editor = codeEditor;
     this.running = false;
+    this.logRuns = logRuns;
 
     this.el = runButtonEl;
     this.runner = codeRunner;
@@ -41,18 +43,20 @@ export class RunInteractions {
     this.el.textContent = "Running...";
 
     // Record the action on the server. No need to await.
-    let payload = {
-      ts: Date.now(),
-      codeVersion: this.editor.getDocVersion(),
-      actionType: USER_ACTIONS.CODE_RUN,
-      sessionNumber: this.sessionNumber,
-      source: this.source,
-      email: this.email,
-    };
-    fetch("/record-user-action", {
-      body: JSON.stringify(payload),
-      ...POST_JSON_REQUEST,
-    });
+    if (this.logRuns) {
+      let payload = {
+        ts: Date.now(),
+        codeVersion: this.editor.getDocVersion(),
+        actionType: USER_ACTIONS.CODE_RUN,
+        sessionNumber: this.sessionNumber,
+        source: this.source,
+        email: this.email,
+      };
+      fetch("/record-user-action", {
+        body: JSON.stringify(payload),
+        ...POST_JSON_REQUEST,
+      });
+    }
 
     let minRunTime = new Promise((resolve) => setTimeout(resolve, 500));
     let code = this.editor.currentCode();

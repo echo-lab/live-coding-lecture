@@ -1,0 +1,75 @@
+.timeline {
+  display: grid;
+  width: 100%;
+  height: 100px;
+  /* grid-template-columns: auto 80px auto; */
+  grid-template-columns: 100%;
+  /* grid-template-rows: 10px auto 10px 25px;
+  grid-template-areas:
+   "events"
+   "timeline"
+   "edits"
+   "info"; */
+  grid-template-rows: 25px auto 25px;
+  grid-template-areas:
+   "events-filter"
+   "timeline"
+   "info";
+  align-items: center;
+}
+
+.timeline .events-filter {
+    display: grid;
+    grid-area: events-filter;
+    width: 100%;
+    height: 100%;
+    /* position: relative; */
+}
+
+.timeline .bar {
+    display: grid;
+    grid-area: timeline;
+    width: 100%;
+    height: 100%;
+}
+
+.timeline .edits {
+    display: grid;
+    grid-area: edits;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.timeline .info {
+    display: grid;
+    grid-area: info;
+    width: 100%;
+    height: 100%;
+}
+
+.tick {
+    position: absolute;
+    height: 100%;
+}
+
+.events .tick {
+    width: 1px;
+    background-color: red;
+}
+
+.edits .tick {
+    width: 1px;
+    background-color: black;
+}
+
+
+
+.events-filter * {
+    display: inline-block;
+    position: relative;
+}
+
+label {
+    margin-right: 30px;
+}

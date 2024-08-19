@@ -259,6 +259,44 @@ app.get("/typealong-session", async (req, res) => {
   }
 });
 
+app.get("/typealong-session-events", async (req, res) => {
+  const id = req.query?.id;
+  if (!id) return res.json({ error: "No id provided..." });
+
+  // Let's go w/o a transaction lol
+  let sesh = await TypealongSession.findByPk(id);
+  if (!sesh) return res.json({ error: "Couldn't find session" });
+
+  let changes = await sesh.getTypealongChanges({
+    attributes: ["change", "change_number", "file_name", "change_ts"],
+    order: ["change_ts"],
+  });
+
+  let actions = await sesh.getTypealongActions({
+    attributes: [
+      "action_ts",
+      "action_type",
+      "details",
+      "code_version",
+      "doc_version", // not needed
+    ],
+    order: ["action_ts"],
+  });
+
+  // womp womp -- typo lol.
+  let lectureId = sesh.LectureSessionsId;
+
+  let lecture = await LectureSession.findByPk(lectureId);
+
+  res.json({
+    email: sesh.email,
+    sessionNumber: sesh.id,
+    sessionName: lecture.name,
+    changes,
+    actions,
+  });
+});
+
 app.post("/current-session-typealong", async (req, res) => {
   let email = req.body?.email;
   let sessionName = req.body?.sessionName;
