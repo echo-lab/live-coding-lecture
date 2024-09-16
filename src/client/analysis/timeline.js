@@ -78,15 +78,18 @@ export function setupTimeline({
 
   let updateSlider = () => {
     let idx = parseInt(slider.value);
+    let prevPos = sliderPos;
     sliderPos = idx;
     let tab = initialTab;
 
-    let editorContents = {};
-    Object.keys(codeEditors).forEach(
-      (fname) => (editorContents[fname] = Text.empty)
-    );
+    let start = prevPos;
+    if (prevPos == sliderPos) return;
+    if (prevPos > sliderPos) {
+      start = 0;
+      Object.values(codeEditors).forEach((e) => e.reset());
+    }
 
-    for (let i = 0; i < idx; i++) {
+    for (let i = start; i < idx; i++) {
       let ev = events[i];
       if (ev.action_type) {
         if (ev.action_type === USER_ACTIONS.SWITCH_TAB) {
@@ -94,15 +97,11 @@ export function setupTimeline({
         }
         continue;
       }
-
+      // we got a change
       let { change, file_name } = ev;
-      // let ch = ChangeSet.fromJSON(JSON.parse(change));
-      // let doc = editorContents[file_name];
-      // doc = ch.apply(doc);
-      // editorContents[file_name] = doc;
-      editorContents[file_name] = ChangeSet.fromJSON(JSON.parse(change)).apply(
-        editorContents[file_name]
-      );
+      tab = file_name;
+      let changes = ChangeSet.fromJSON(JSON.parse(change));
+      codeEditors[file_name].applyChanges(changes);
     }
 
     // Display the information for the event.
@@ -122,10 +121,8 @@ export function setupTimeline({
         info.textContent = `t=${s} (seconds): Change #${ev.change_number} to file ${ev.file_name}`;
       }
     }
+    info.textContent = `${idx}) ${info.textContent}`;
     switchTabFn && switchTabFn(tab);
-    for (let [fileName, editor] of Object.entries(codeEditors)) {
-      editor.replaceContents(editorContents[fileName].toString());
-    }
   };
 
   slider.oninput = updateSlider;

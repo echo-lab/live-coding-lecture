@@ -376,6 +376,20 @@ export class ReviewCodeEditor {
     this.view = new EditorView({ state, parent: node });
   }
 
+  applyChanges(changes) {
+    this.view.dispatch({ changes });
+  }
+
+  reset() {
+    this.view.dispatch({
+      changes: {
+        from: 0,
+        to: this.view.state.doc.length,
+        insert: Text.empty.toString(),
+      },
+    });
+  }
+
   currentCode() {
     return this.view.state.doc.toString();
   }
