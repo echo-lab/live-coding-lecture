@@ -41,11 +41,17 @@
     position: relative;
 }
 
-.timeline .info {
+.timeline .below-the-bar {
     display: grid;
     grid-area: info;
     width: 100%;
     height: 100%;
+}
+
+.below-the-bar .container-thing {
+    width: 100%;
+    display: flex;
+    justify-content:space-between;
 }
 
 .tick {

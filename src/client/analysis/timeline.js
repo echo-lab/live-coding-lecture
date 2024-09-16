@@ -3,6 +3,9 @@ import { USER_ACTIONS } from "../../shared-constants";
 
 let slider = document.querySelector("#timeline-slider");
 let info = document.querySelector(".timeline .info");
+let prevButt = document.querySelector("#prev-history");
+let nextButt = document.querySelector("#next-history");
+let sliderPos = 0;
 // let sliderBar = document.querySelector(".timeline .bar");
 
 // // Update the current slider value (each time you drag the slider handle)
@@ -73,8 +76,9 @@ export function setupTimeline({
 
   setUpTicks(events);
 
-  slider.oninput = function () {
-    let idx = this.value;
+  let updateSlider = () => {
+    let idx = parseInt(slider.value);
+    sliderPos = idx;
     let tab = initialTab;
 
     let editorContents = {};
@@ -123,4 +127,16 @@ export function setupTimeline({
       editor.replaceContents(editorContents[fileName].toString());
     }
   };
+
+  slider.oninput = updateSlider;
+  nextButt.addEventListener("click", () => {
+    slider.value = sliderPos + 1;
+    // sliderPos = parseInt(slider.value);
+    updateSlider();
+  });
+  prevButt.addEventListener("click", () => {
+    slider.value = sliderPos - 1;
+    // sliderPos = parseInt(slider.value);
+    updateSlider();
+  });
 }
