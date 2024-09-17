@@ -301,6 +301,73 @@ app.get("/typealong-session-events", async (req, res) => {
   });
 });
 
+app.get("/notes-session-events", async (req, res) => {
+  const id = req.query?.id;
+  if (!id) return res.json({ error: "No id provided..." });
+
+  let sesh = await NotesSession.findByPk(id);
+  if (!sesh) return res.json({ error: "Couldn't find session" });
+
+  let actions = await sesh.getNotesActions({
+    attributes: [
+      "action_ts",
+      "action_type",
+      "details",
+      // "code_version",
+      // "doc_version",
+    ],
+    order: ["action_ts"],
+  });
+
+  let changes = (
+    await sesh.getPlaygroundCodeChanges({
+      attributes: ["change", "change_number", "file_name", "change_ts"],
+      order: ["change_ts"],
+    })
+  ).map((c) => ({
+    change: c.change,
+    change_ts: c.change_ts,
+    change_number: c.change_number,
+    file_name: "playground.py",
+  }));
+
+  let notesChanges = (
+    await sesh.getNotesChanges({
+      attributes: ["change", "change_ts", "change_number"],
+      order: ["change_ts"],
+    })
+  ).map((c) => ({
+    change: c.change, // Why??? shouldn't this be automatic??
+    change_ts: c.change_ts, // Why???
+    change_number: c.change_number,
+    file_name: "notes",
+  }));
+  let lectureId = sesh.LectureSessionsId;
+  let lecture = await LectureSession.findByPk(lectureId);
+
+  let instructorChanges = (
+    await lecture.getInstructorChanges({
+      attributes: ["change", "file_name", "change_ts", "change_number"],
+      order: ["change_ts"],
+    })
+  ).map((c) => ({
+    change: c.change, // Why??? shouldn't this be automatic??
+    change_ts: c.change_ts, // Why???
+    change_number: c.change_number,
+    file_name: "instructor.py",
+  }));
+
+  res.json({
+    email: sesh.email,
+    sessionNumber: sesh.id,
+    sessionName: lecture.name,
+    changes: [...changes, ...instructorChanges, ...notesChanges],
+    instructorChanges,
+    // notesChanges,
+    actions,
+  });
+});
+
 app.post("/current-session-typealong", async (req, res) => {
   let email = req.body?.email;
   let sessionName = req.body?.sessionName;

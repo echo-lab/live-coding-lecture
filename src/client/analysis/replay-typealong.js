@@ -3,7 +3,7 @@ import "../style-replay.css";
 
 import { GET_JSON_REQUEST } from "../utils.js";
 
-import { ReviewCodeEditor, StudentCodeEditor } from "../code-editors.js";
+import { ReviewCodeEditor } from "../code-editors.js";
 import { PythonCodeRunner } from "../code-runner.js";
 import { Text } from "@codemirror/state";
 import {
@@ -11,7 +11,7 @@ import {
   makeConsoleResizable,
   RunInteractions,
 } from "../shared-interactions.js";
-import { CLIENT_TYPE, USER_ACTIONS } from "../../shared-constants.js";
+import { CLIENT_TYPE } from "../../shared-constants.js";
 import { setupTimeline } from "./timeline.js";
 
 const TAB_NAMES = ["notes.py", "notes2.py", "notes3.py"];
@@ -39,7 +39,7 @@ async function initialize({ sessionNumber, email, actions, changes }) {
   let codeEditors = TAB_NAMES.map((fileName, idx) => {
     let doc = Text.empty.toJSON();
     let node = codeContainers[idx];
-    return new ReviewCodeEditor({ node, doc, isEditable: true });
+    return new ReviewCodeEditor({ node, doc, isEditable: false });
   });
 
   let codeRunner = new PythonCodeRunner();

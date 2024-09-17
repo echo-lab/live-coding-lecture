@@ -14,7 +14,14 @@ Quill.register(CodeSnapshotBlot);
 const Delta = Quill.import("delta");
 
 export class NotesEditor {
-  constructor({ nodeId, deltas, sessionNumber, email, shouldRecord = false }) {
+  constructor({
+    nodeId,
+    deltas,
+    sessionNumber,
+    email,
+    shouldRecord = false,
+    readOnly = false,
+  }) {
     this.queuedDeltas = [];
     this.localVersionNum = deltas.length;
     this.serverVersionNum = deltas.length;
@@ -25,6 +32,7 @@ export class NotesEditor {
     this.recorder = shouldRecord ? new Recorder() : null;
 
     this.quill = new Quill(nodeId, {
+      readOnly,
       modules: {
         clipboard: {
           matchers: [[".code-snapshot", (node, delta) => delta]],
@@ -105,6 +113,15 @@ export class NotesEditor {
       if (!(snapshot instanceof CodeSnapshotBlot)) return;
       this.quill.setSelection(snapshot.offset(this.quill.scroll), 1, "user");
     });
+  }
+
+  reset() {
+    this.quill.deleteText(0, this.quill.getLength());
+  }
+
+  applyChange(jsonChange) {
+    let delta = new Delta(JSON.parse(jsonChange));
+    this.quill.updateContents(delta, "silent");
   }
 
   getDocVersion() {

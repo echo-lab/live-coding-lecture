@@ -58,7 +58,7 @@ export function setupTimeline({
   actions,
   changes,
   codeEditors,
-  noteEditor,
+  notesEditor,
   initialTab,
   switchTabFn,
 }) {
@@ -71,6 +71,7 @@ export function setupTimeline({
   let events = [...actions, ...changes];
   events.sort((a, b) => a.ts - b.ts);
   let t0 = events.length > 0 ? events[0].ts : 0;
+  console.log("changes: ", changes);
 
   slider.max = events.length;
 
@@ -80,13 +81,15 @@ export function setupTimeline({
     let idx = parseInt(slider.value);
     let prevPos = sliderPos;
     sliderPos = idx;
-    let tab = initialTab;
+    let tab = "";
 
     let start = prevPos;
     if (prevPos == sliderPos) return;
     if (prevPos > sliderPos) {
+      tab = initialTab;
       start = 0;
       Object.values(codeEditors).forEach((e) => e.reset());
+      notesEditor.reset();
     }
 
     for (let i = start; i < idx; i++) {
@@ -99,9 +102,17 @@ export function setupTimeline({
       }
       // we got a change
       let { change, file_name } = ev;
-      tab = file_name;
-      let changes = ChangeSet.fromJSON(JSON.parse(change));
-      codeEditors[file_name].applyChanges(changes);
+      if (file_name !== "instructor.py") {
+        tab = file_name;
+      }
+      if (file_name === "notes") {
+        // Figure out what to do
+        notesEditor.applyChange(change);
+      } else {
+        // TODO: move this logic inside... maybe? Meh.
+        let changes = ChangeSet.fromJSON(JSON.parse(change));
+        codeEditors[file_name].applyChanges(changes);
+      }
     }
 
     // Display the information for the event.
@@ -113,16 +124,16 @@ export function setupTimeline({
       let s = ms / 1000;
       if (ev.action_type) {
         if (ev.details) {
-          info.textContent = `t=${s} (seconds): Event: ${ev.action_type} (${ev.details})`;
+          info.textContent = `t=${s} -- Event: ${ev.action_type} (${ev.details})`;
         } else {
-          info.textContent = `t=${s} (seconds): Event: ${ev.action_type}`;
+          info.textContent = `t=${s} -- Event: ${ev.action_type}`;
         }
       } else {
-        info.textContent = `t=${s} (seconds): Change #${ev.change_number} to file ${ev.file_name}`;
+        info.textContent = `t=${s} -- Change #${ev.change_number} to file ${ev.file_name}`;
       }
     }
     info.textContent = `${idx}) ${info.textContent}`;
-    switchTabFn && switchTabFn(tab);
+    switchTabFn && tab !== "" && switchTabFn(tab);
   };
 
   slider.oninput = updateSlider;
