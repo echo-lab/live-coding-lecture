@@ -89,7 +89,7 @@ export function setupTimeline({
       tab = initialTab;
       start = 0;
       Object.values(codeEditors).forEach((e) => e.reset());
-      notesEditor.reset();
+      notesEditor?.reset();
     }
 
     for (let i = start; i < idx; i++) {
@@ -107,7 +107,7 @@ export function setupTimeline({
       }
       if (file_name === "notes") {
         // Figure out what to do
-        notesEditor.applyChange(change);
+        notesEditor?.applyChange(change);
       } else {
         // TODO: move this logic inside... maybe? Meh.
         let changes = ChangeSet.fromJSON(JSON.parse(change));
